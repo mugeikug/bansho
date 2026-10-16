@@ -22,7 +22,7 @@
 
   // 文字が選ばれていない（カーソルだけの）ときは、ブラウザの「次に打つ文字の書式」を使う。
   // 文字色・マーカー・囲みは execCommand に目印の値を渡し、読み取り時に意味上の値へ戻す。
-  const COLOR_SENT = { default: '#000001', red: '#000002', blue: '#000003', green: '#000004' };
+  const COLOR_SENT = { default: '#000001', red: '#000002', blue: '#000003', green: '#000004', gray: '#000005' };
   const HL_SENT = { none: 'rgb(0, 0, 9)', yellow: 'rgb(0, 0, 5)', pink: 'rgb(0, 0, 6)', blue: 'rgb(0, 0, 7)', green: 'rgb(0, 0, 8)' };
   const BOX_ON = 'bansho-box', BOX_OFF = 'bansho-nobox';
   const invert = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [v, k]));
@@ -39,7 +39,7 @@
     document.body.appendChild(probe);
     for (const theme of ['white', 'board']) {
       probe.className = 'theme-' + theme;
-      for (const name of ['default', 'red', 'blue', 'green']) {
+      for (const name of ['default', 'red', 'blue', 'green', 'gray']) {
         const s = document.createElement('span');
         s.style.color = `var(--c-${name})`;
         probe.appendChild(s);
@@ -72,7 +72,7 @@
   }
 
   const isHex = (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
-  const SEM = /^(red|blue|green)$/;
+  const SEM = /^(red|blue|green|gray)$/;
   B.isColorValue = (v) => isHex(v) || SEM.test(v || '');
   B.isBullet = (v) => typeof v === 'string' && v.length > 0 && v.length <= 6 && !/[<>&"]/.test(v);
   B.isFontName = (v) => typeof v === 'string' && /^[^'"<>;\\{}()]{1,80}$/.test(v);
@@ -95,7 +95,7 @@
       case 'U': case 'INS': {
         const dbl = el.classList.contains('ul-dbl') || (el.style && el.style.textDecorationStyle === 'double');
         let col = null;
-        for (const cls of el.classList) { const m = /^ul-(red|blue|green)$/.exec(cls); if (m) col = m[1]; }
+        for (const cls of el.classList) { const m = /^ul-(red|blue|green|gray)$/.exec(cls); if (m) col = m[1]; }
         const sc = el.style && el.style.textDecorationColor;
         if (!col && sc) col = colorName(sc) || null;
         if (col === 'default') col = null;
@@ -451,6 +451,7 @@
         case 'b': document.execCommand('bold'); break;
         case 'i': document.execCommand('italic'); break;
         case 'u': document.execCommand('underline'); break;
+        case 'k': document.execCommand('strikeThrough'); break;
         case 's': document.execCommand(value === 'sub' ? 'subscript' : 'superscript'); break;
         case 'c': document.execCommand('foreColor', false, COLOR_SENT[value] || COLOR_SENT.default); break;
         case 'h': document.execCommand('hiliteColor', false, HL_SENT[cur.h === value ? 'none' : value]); break;

@@ -20,6 +20,7 @@
       <button data-cmd="save" title="上書き保存 (Ctrl+S)">保存</button>
       <button data-cmd="saveas" title="名前を付けて保存 (Ctrl+Shift+S)">別名保存</button>
       <button data-cmd="print" title="PDF出力・印刷 (Ctrl+P)">PDF</button>
+      <button data-cmd="pptx" title="PowerPoint（.pptx）に書き出す">PPTX</button>
     </div>
     <div class="group">
       <button data-cmd="undo" id="btn-undo" class="icon" title="元に戻す (Ctrl+Z)">↶</button>
@@ -72,6 +73,7 @@
       <button data-fmt="b" class="fmt" title="太字 (Ctrl+B)"><b>B</b></button>
       <button data-fmt="i" class="fmt" title="斜体 (Ctrl+I)"><i style="font-family:serif">I</i></button>
       <button data-fmt="u" class="fmt" title="下線 (Ctrl+U)"><u>U</u></button>
+      <button data-fmt="k" class="fmt" title="取り消し線 (Ctrl+Shift+X)"><s>S</s></button>
       <button data-fmt="s" data-val="sub" class="fmt" title="下付き (Ctrl+= または Ctrl+,)">x<sub>2</sub></button>
       <button data-fmt="s" data-val="sup" class="fmt" title="上付き (Ctrl+Shift+= または Ctrl+.)">x<sup>2</sup></button>
       <span class="sep"></span>
@@ -157,6 +159,17 @@
   </div>
 </dialog>
 
+<dialog id="export-dialog">
+  <h2>PowerPoint に書き出す</h2>
+  <p>書き出す背景：</p>
+  <label class="radio"><input type="radio" name="export-theme" value="white" checked> 白地</label>
+  <label class="radio"><input type="radio" name="export-theme" value="same"> 画面と同じ</label>
+  <div class="actions">
+    <button id="export-cancel">キャンセル</button>
+    <button id="export-ok" class="primary">書き出す</button>
+  </div>
+</dialog>
+
 <dialog id="help-dialog">
   <h2>ショートカット一覧</h2>
   <div id="help-body"></div>
@@ -190,6 +203,7 @@
 <script src="js/editor.js"></script>
 <script src="js/fileio.js"></script>
 <script src="js/pptx.js"></script>
+<script src="js/pptx-export.js"></script>
 <script src="js/backup.js"></script>
 <script src="js/app.js"></script>
 </body>

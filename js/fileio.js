@@ -138,6 +138,58 @@
       }
     }
 
+    // PowerPoint に書き出す（白地以外のテーマのときは、白地か画面と同じかを選ぶ）
+    async exportPptx() {
+      if (this.beforeChange) this.beforeChange();
+      let theme = this.store.doc.theme;
+      if (theme !== 'white') {
+        const dlg = document.getElementById('export-dialog');
+        dlg.querySelector('input[name=export-theme][value=white]').checked = true;
+        dlg.querySelector('input[name=export-theme][value=same]').parentElement.lastChild.textContent = ' 画面と同じ（' + B.THEME_LABELS[theme] + '）';
+        const pick = await new Promise((resolve) => {
+          document.getElementById('export-cancel').onclick = () => { dlg.close(); resolve(null); };
+          document.getElementById('export-ok').onclick = () => { dlg.close(); resolve(dlg.querySelector('input[name=export-theme]:checked').value); };
+          dlg.oncancel = () => resolve(null);
+          dlg.showModal();
+        });
+        if (!pick) return;
+        if (pick === 'white') theme = 'white';
+      }
+      document.body.classList.add('busy');
+      let r;
+      try {
+        this.toast('PowerPoint に書き出し中…', true);
+        r = await B.exportPptx(this.store.doc, theme);
+      } catch (err) {
+        alert('書き出せませんでした。\n' + (err && err.message ? err.message : err));
+        return;
+      } finally {
+        document.body.classList.remove('busy');
+      }
+      const name = this.name + '.pptx';
+      try {
+        if (typeof window.showSaveFilePicker === 'function') {
+          const h = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'PowerPoint プレゼンテーション', accept: { [PPTX_MIME]: ['.pptx'] } }] });
+          const w = await h.createWritable();
+          await w.write(r.blob);
+          await w.close();
+        } else {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(r.blob);
+          a.download = name;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') { this.toast('書き出しを取りやめました'); return; }
+        alert('保存できませんでした。\n' + (err && err.message ? err.message : err));
+        return;
+      }
+      const msg = 'PowerPoint に書き出しました：' + name;
+      if (r.warnings.length) alert(msg + '\n\n次の点は PowerPoint では再現できないため、近い形にしました：\n・' + r.warnings.join('\n・'));
+      else this.toast(msg);
+    }
+
     newDoc() {
       if (this.store.dirty && !confirm('保存していない変更があります。破棄して新規作成しますか？')) return;
       this.handle = null;

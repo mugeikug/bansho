@@ -15,7 +15,7 @@ window.B = window.B || {};
 
   // 色の値 → CSS。意味上の色名はテーマの変数に、'#rrggbb'（PowerPoint から読み込んだ色）はそのまま。
   B.colorCss = (c, kind) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : `var(--${kind || 'c'}-${c || 'default'})`);
-  const COLOR_OK = /^(default|red|blue|green|yellow|pink|#[0-9a-f]{6})$/i;
+  const COLOR_OK = /^(default|red|blue|green|gray|yellow|pink|#[0-9a-f]{6})$/i;
   B.THEMES = ['white', 'board', 'black'];
   B.THEME_LABELS = { white: '白地', board: '黒板（緑）', black: '黒板（黒）' };
 
@@ -379,7 +379,7 @@ window.B = window.B || {};
   const STYLE_RULES = {
     SPAN: { 'font-size': NUM_EM, color: HEX, 'font-family': /^'[^'"<>;\\{}()]{1,80}'$/ },
     U: { 'text-decoration-color': HEX },
-    DIV: { 'padding-left': NUM_EM, 'text-indent': NUM_EM, 'margin-top': NUM_EM, 'text-align': /^(left|center|right)$/, '--bw': NUM_EM, '--bs': /^\d+(\.\d+)?$/, '--bc': /^(#[0-9a-f]{6}|var\(--c-(default|red|blue|green)\))$/i },
+    DIV: { 'padding-left': NUM_EM, 'text-indent': NUM_EM, 'margin-top': NUM_EM, 'text-align': /^(left|center|right)$/, '--bw': NUM_EM, '--bs': /^\d+(\.\d+)?$/, '--bc': /^(#[0-9a-f]{6}|var\(--c-(default|red|blue|green|gray)\))$/i },
   };
   function cleanStyle(tag, value) {
     const rules = STYLE_RULES[tag];

@@ -2,7 +2,7 @@
 // オフラインで使うためのサービスワーカー（アプリとしてインストールしたときに働く）。
 // アプリのファイルをすべて保存しておき、ネットにつながっていなくても起動できるようにする。
 // 更新：このファイルの VERSION が変わると、ブラウザが新しい版をダウンロードし、次に開いたときから新しい版になる。
-const VERSION = '2026-10-16.1';
+const VERSION = '2026-10-16.2';
 const CACHE = 'bansho-' + VERSION;
 const FILES = [
   './',
@@ -19,6 +19,7 @@ const FILES = [
   './js/editor.js',
   './js/fileio.js',
   './js/pptx.js',
+  './js/pptx-export.js',
   './js/backup.js',
   './js/app.js',
   './icons/icon-192.png',

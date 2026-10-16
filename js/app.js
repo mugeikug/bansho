@@ -5,6 +5,7 @@
   const $$ = (s) => Array.from(document.querySelectorAll(s));
   const PEN_COLORS = [['default', '既定色'], ['red', '赤'], ['blue', '青'], ['green', '緑']];
   const MARKER_COLORS = [['yellow', '黄'], ['pink', 'ピンク'], ['blue', '水色'], ['green', '緑']];
+  const TEXT_COLORS = PEN_COLORS.concat([['gray', 'グレー']]);
   const TOOL_KEYS = { v: 'select', t: 'text', p: 'pen', h: 'marker', e: 'eraser', l: 'line', a: 'arrow', r: 'rect', o: 'ellipse' };
 
   const state = {
@@ -283,7 +284,7 @@
     const tc = $('#text-colors');
     tc.className = 'theme-' + store.doc.theme;
     tc.textContent = '';
-    PEN_COLORS.forEach(([key, label], i) => {
+    TEXT_COLORS.forEach(([key, label], i) => {
       const b = document.createElement('button');
       b.className = 'fmt tcolor';
       b.dataset.fmt = 'c';
@@ -439,6 +440,7 @@
     save: () => files.save(false),
     saveas: () => files.save(true),
     print: () => files.print(),
+    pptx: () => files.exportPptx(),
     undo: () => undo(),
     redo: () => redo(),
     present: () => togglePresenter(),
@@ -703,6 +705,7 @@
       if (textTarget) {
         const fmt = {
           b: ['b'], i: ['i'], u: ['u'], k: ['x'], h: ['h', state.textMarker],
+          ...(e.shiftKey ? { x: ['k'] } : {}),
           '=': ['s', 'sub'], ',': ['s', 'sub'], '+': ['s', 'sup'], '.': ['s', 'sup'],
         }[lower];
         if (fmt) { stop(); applyFormat(fmt[0], fmt[1]); return; }
@@ -716,8 +719,8 @@
       if (lower === 'a') { stop(); setTool('select'); editor.selectAll(); return; }
       return;
     }
-    if (e.altKey && !ctrl && /^Digit[1-4]$/.test(e.code)) {
-      if (textTarget) { stop(); applyFormat('c', PEN_COLORS[Number(e.code[5]) - 1][0]); }
+    if (e.altKey && !ctrl && /^Digit[1-5]$/.test(e.code)) {
+      if (textTarget) { stop(); applyFormat('c', TEXT_COLORS[Number(e.code[5]) - 1][0]); }
       return;
     }
     if (k === 'Tab' && inText && !ctrl && !e.altKey) { stop(); editor.handleTab(e.shiftKey); return; }
@@ -801,7 +804,8 @@
       ['Ctrl+B / I / U', '太字 / 斜体 / 下線'],
       ['Ctrl+= または Ctrl+,', '下付き'], ['Ctrl+Shift+= または Ctrl+.', '上付き'],
       ['Ctrl+H', 'マーカー（最後に使った色）'], ['Ctrl+K', '四角囲み'],
-      ['Alt+1〜4', '文字色：既定色 / 赤 / 青 / 緑'],
+      ['Alt+1〜5', '文字色：既定色 / 赤 / 青 / 緑 / グレー'],
+      ['Ctrl+Shift+X', '取り消し線'],
       ['Ctrl+Shift+> / <（Ctrl+] / [）', '文字を1段階大きく / 小さく'],
       ['Tab / Shift+Tab', '行頭（箇条書き・字下げのある行）や複数行の選択では字下げを深く / 浅く。それ以外はタブ文字。表では次 / 前のセルへ'],
       ['Ctrl+Shift+L', '箇条書きのオン・オフ'],

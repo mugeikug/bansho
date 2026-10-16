@@ -199,6 +199,7 @@
   function semanticColor(col) {
     if (!col) return 'default';
     const [h, s, l] = rgbToHsl(...hexToRgb(col.hex));
+    if (s < 0.25 && l >= 0.45 && l <= 0.85) return 'gray';
     if (s < 0.25 || l < 0.15 || l > 0.85) return 'default';
     if (h >= 75 && h < 165) return 'green';
     if (h >= 165 && h < 280) return 'blue';
@@ -745,6 +746,32 @@
     const basePt = [...count.entries()].sort((a, b) => b[1] - a[1])[0][0];
     const basePx = basePt * 2;
     const em = (px) => Math.round((px / basePx) * 1000) / 1000;
+    // タブ：PowerPoint の既定のタブ位置（テキストボックスの左端から 1 インチごと）まで空白で詰める。
+    // 板書のタブは字下げのあとから数えるため、字下げのある行では位置がずれてしまうので、ここで空白に置き換える。
+    {
+      const stop = 914400 * ctx.s;
+      let x = null;
+      for (let i = 0; i < t.flat.length; i++) {
+        const c = t.flat[i];
+        if (c.ch === '\n') { x = null; continue; }
+        const px = t.sizes[i] * 2;
+        if (x === null) x = c.ln ? (c.ln.bu ? c.ln.pl : c.ln.pl + c.ln.ti) : 0;
+        if (c.ch === '\t') {
+          const next = (Math.floor((x + 0.5) / stop) + 1) * stop;
+          const sw = textWidth(' ', px, t.jaFlags[i]) || px * 0.3;
+          const n = Math.max(1, Math.round((next - x) / sw));
+          const size = t.sizes[i], ja = t.jaFlags[i];
+          const spaces = Array.from({ length: n }, () => ({ ch: ' ', a: c.a, ln: c.ln }));
+          t.flat.splice(i, 1, ...spaces);
+          t.sizes.splice(i, 1, ...spaces.map(() => size));
+          t.jaFlags.splice(i, 1, ...spaces.map(() => ja));
+          i += n - 1;
+          x = next;
+        } else {
+          x += textWidth(c.ch, px, t.jaFlags[i]);
+        }
+      }
+    }
     const aligns = new Set(t.flat.filter((c) => c.ln).map((c) => c.ln.ta || null));
     const oneAlign = aligns.size <= 1 ? [...aligns][0] || null : undefined;
     t.flat.forEach((c, i) => {

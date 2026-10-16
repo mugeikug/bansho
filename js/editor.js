@@ -857,6 +857,7 @@
         st.b = q('bold') || null;
         st.i = q('italic') || null;
         st.u = q('underline') || null;
+        st.k = q('strikeThrough') || null;
         st.s = q('subscript') ? 'sub' : q('superscript') ? 'sup' : null;
       }
       return st;

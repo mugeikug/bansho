@@ -62,6 +62,7 @@
   --c-red: #d62828;
   --c-blue: #1d4ed8;
   --c-green: #15803d;
+  --c-gray: #9a9a9a;
   --hl-yellow: #ffe100;
   --hl-pink: #ff6fbf;
   --hl-blue: #4cc3ff;
@@ -80,6 +81,7 @@
   --c-red: #ff8c8c;
   --c-blue: #8cc4ff;
   --c-green: #a8f0a0;
+  --c-gray: #aeb6b1;
   --hl-yellow: #fff06a;
   --hl-pink: #ff9bd6;
   --hl-blue: #7fd8ff;
@@ -145,6 +147,7 @@
 .bpage .c-red { color: var(--c-red); }
 .bpage .c-blue { color: var(--c-blue); }
 .bpage .c-green { color: var(--c-green); }
+.bpage .c-gray { color: var(--c-gray); }
 
 .bpage .hl-yellow { background-color: var(--hlbg-yellow); }
 .bpage .hl-pink { background-color: var(--hlbg-pink); }
@@ -177,6 +180,7 @@
 .bpage font[color="#000002"] { color: var(--c-red); }
 .bpage font[color="#000003"] { color: var(--c-blue); }
 .bpage font[color="#000004"] { color: var(--c-green); }
+.bpage font[color="#000005"] { color: var(--c-gray); }
 .bpage [style*="background-color: rgb(0, 0, 5)"] { background-color: var(--hlbg-yellow) !important; }
 .bpage [style*="background-color: rgb(0, 0, 6)"] { background-color: var(--hlbg-pink) !important; }
 .bpage [style*="background-color: rgb(0, 0, 7)"] { background-color: var(--hlbg-blue) !important; }
@@ -190,6 +194,7 @@
   --c-red: #ff8c8c;
   --c-blue: #8cc4ff;
   --c-green: #a8f0a0;
+  --c-gray: #aeb6b1;
   --hl-yellow: #fff06a;
   --hl-pink: #ff9bd6;
   --hl-blue: #7fd8ff;
@@ -212,6 +217,7 @@
 .bpage u.ul-red { text-decoration-color: var(--c-red); }
 .bpage u.ul-blue { text-decoration-color: var(--c-blue); }
 .bpage u.ul-green { text-decoration-color: var(--c-green); }
+.bpage u.ul-gray { text-decoration-color: var(--c-gray); }
 
 /* 欧文も游ゴシックで表示するテキスト（PowerPoint のテーマが游ゴシックのとき。空白で位置を揃えた文字がずれないように） */
 .bpage .text.f-ja {
