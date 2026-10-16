@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>無題 - デジタル板書</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png">
+<meta name="theme-color" content="#1f3a2e">
+<link rel="stylesheet" href="css/page.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+  <header id="toolbar">
+   <div class="row">
+    <div class="group">
+      <button data-cmd="new" title="新規作成">新規</button>
+      <button data-cmd="open" title="開く (Ctrl+O)　板書ファイル（.board）と PowerPoint（.pptx）">開く</button>
+      <button data-cmd="save" title="上書き保存 (Ctrl+S)">保存</button>
+      <button data-cmd="saveas" title="名前を付けて保存 (Ctrl+Shift+S)">別名保存</button>
+      <button data-cmd="print" title="PDF出力・印刷 (Ctrl+P)">PDF</button>
+    </div>
+    <div class="group">
+      <button data-cmd="undo" id="btn-undo" class="icon" title="元に戻す (Ctrl+Z)">↶</button>
+      <button data-cmd="redo" id="btn-redo" class="icon" title="やり直し (Ctrl+Y)">↷</button>
+    </div>
+    <div class="group" id="tools">
+      <button data-tool="select" title="選択 (V)">選択</button>
+      <button data-tool="text" title="文字 (T)">文字</button>
+      <button data-tool="pen" title="ペン (P)">ペン</button>
+      <button data-tool="marker" title="蛍光ペン (H)">蛍光ペン</button>
+      <button data-tool="eraser" title="消しゴム (E)">消しゴム</button>
+      <span class="sep"></span>
+      <button data-tool="line" class="icon" title="直線 (L)　Shift で水平・垂直・45°"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <button data-tool="arrow" class="icon" title="矢印 (A)　Shift で水平・垂直・45°"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><line x1="3" y1="17" x2="14" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3l-8 2 6 6z" fill="currentColor"/></svg></button>
+      <button data-tool="rect" class="icon" title="四角 (R)　Shift で正方形"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="5" width="14" height="10" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button data-tool="ellipse" class="icon" title="楕円 (O)　Shift で正円"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="10" rx="7.5" ry="5.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button data-cmd="image" class="icon" title="画像を挿入 (I)　貼り付け（Ctrl+V）やドラッグ＆ドロップでも入れられます"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="7" cy="8" r="1.6" fill="currentColor"/><path d="M3.5 15l4.5-4.5 3 3 2-2 3.5 3.5z" fill="currentColor"/></svg></button>
+      <button data-cmd="table" id="btn-table" class="icon" title="表を挿入"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 8h15M2.5 12.3h15M7.5 3.5v13M12.5 3.5v13" stroke="currentColor" stroke-width="1.3"/></svg></button>
+    </div>
+    <div class="spacer"></div>
+    <div class="group">
+      <select id="theme-select" title="背景テーマ（色は意味を保って切り替わります）">
+        <option value="white">白地</option>
+        <option value="board">黒板 緑</option>
+        <option value="black">黒板 黒</option>
+      </select>
+    </div>
+    <div class="group" id="present-group">
+      <button data-cmd="present" id="btn-present" title="提示画面を開く (F5)">提示画面</button>
+      <button data-cmd="pin" id="btn-pin" title="提示画面の表示をこのページに固定／解除 (F)">固定</button>
+      <button data-cmd="black" id="btn-black" title="暗転 (B)">暗転</button>
+      <button data-cmd="white" id="btn-white" title="白画面 (W)">白</button>
+    </div>
+    <button data-cmd="help" class="icon" title="ショートカット一覧 (F1)">？</button>
+   </div>
+   <div class="row row2">
+    <div class="group" id="pen-opts">
+      <span id="colors"></span>
+      <span id="sizes"></span>
+    </div>
+    <div class="group" id="text-opts">
+      <span class="fontsize" title="文字の大きさ（pt）。範囲を選んでいればその文字だけ、選んでいなければボックス全体が変わります">
+        <input id="fs-input" class="keep-text-focus" type="text" inputmode="decimal" autocomplete="off" aria-label="文字の大きさ（pt）">
+        <button id="fs-drop" class="fs-drop" title="大きさの候補">▾</button>
+      </span>
+      <span class="unit">pt</span>
+      <button data-cmd="fontup" class="icon fs-step" title="文字を大きく (Ctrl+Shift+&gt; または Ctrl+])">A<small>▲</small></button>
+      <button data-cmd="fontdown" class="icon fs-step" title="文字を小さく (Ctrl+Shift+&lt; または Ctrl+[)">A<small>▼</small></button>
+      <span class="sep"></span>
+      <button data-fmt="b" class="fmt" title="太字 (Ctrl+B)"><b>B</b></button>
+      <button data-fmt="i" class="fmt" title="斜体 (Ctrl+I)"><i style="font-family:serif">I</i></button>
+      <button data-fmt="u" class="fmt" title="下線 (Ctrl+U)"><u>U</u></button>
+      <button data-fmt="s" data-val="sub" class="fmt" title="下付き (Ctrl+= または Ctrl+,)">x<sub>2</sub></button>
+      <button data-fmt="s" data-val="sup" class="fmt" title="上付き (Ctrl+Shift+= または Ctrl+.)">x<sup>2</sup></button>
+      <span class="sep"></span>
+      <button data-cmd="bullets" id="btn-bullets" class="icon" title="箇条書き (Ctrl+Shift+L)"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="5" r="1.6" fill="currentColor"/><circle cx="4" cy="10" r="1.6" fill="currentColor"/><circle cx="4" cy="15" r="1.6" fill="currentColor"/><path d="M8 5h9M8 10h9M8 15h9" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      <button data-cmd="outdent" class="icon" title="字下げを浅く (Shift+Tab)"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4h9M8 8h9M8 12h9M3 16h14M6 6.5L3 9l3 2.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
+      <button data-cmd="indent" class="icon" title="字下げを深く (行頭で Tab)"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4h9M8 8h9M8 12h9M3 16h14M3 6.5L6 9l-3 2.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
+      <button data-cmd="tableops" id="btn-tableops" title="表の行・列の追加と削除" hidden>表 ▾</button>
+      <span class="sep"></span>
+      <span id="text-colors"></span>
+      <span class="sep"></span>
+      <span id="text-markers"></span>
+      <button data-fmt="x" class="fmt box-btn" title="四角囲み (Ctrl+K)"><span>囲</span></button>
+    </div>
+    <div class="group" id="eraser-opts">
+      <button data-eraser-mode="stroke" title="触れた線を丸ごと消す">線ごと</button>
+      <button data-eraser-mode="partial" title="なぞった部分だけを消す（図形は丸ごと消えます）">部分</button>
+      <span class="sep"></span>
+      <span id="eraser-sizes"></span>
+    </div>
+    <div class="group" id="no-opts"><span class="hint" id="tool-hint"></span></div>
+   </div>
+  </header>
+  <div id="main">
+    <aside id="sidebar">
+      <div id="thumbs"></div>
+      <div id="page-ops">
+        <button data-cmd="addpage" title="次にページを追加 (Ctrl+M)">＋ 追加</button>
+        <button data-cmd="duppage" title="このページを複製 (Ctrl+Shift+D)">複製</button>
+        <button data-cmd="delpage" title="このページを削除">削除</button>
+      </div>
+    </aside>
+    <div id="stage"></div>
+  </div>
+  <footer id="status">
+    <span id="page-no"></span>
+    <span id="present-state"></span>
+    <span class="spacer"></span>
+    <span id="toast"></span>
+  </footer>
+</div>
+<div id="fs-menu" class="popup" hidden></div>
+<div id="table-picker" class="popup" hidden><div id="table-grid"></div><div id="table-size">表の大きさを選ぶ</div></div>
+<div id="table-ops" class="popup" hidden>
+  <button data-op="rowAbove">上に行を挿入</button>
+  <button data-op="rowBelow">下に行を挿入</button>
+  <button data-op="colLeft">左に列を挿入</button>
+  <button data-op="colRight">右に列を挿入</button>
+  <hr>
+  <button data-op="rowDelete">この行を削除</button>
+  <button data-op="colDelete">この列を削除</button>
+  <button data-op="delete">表全体を削除</button>
+</div>
+<input type="file" id="image-file" accept="image/*" multiple hidden>
+<div id="drop-hint" hidden>ここに画像・.board・.pptx ファイルをドロップ</div>
+
+<dialog id="restore-dialog">
+  <h2>前回の作業内容が残っています</h2>
+  <p>保存されずに終了した作業内容が、ブラウザ内に自動バックアップされています。</p>
+  <p class="restore-info" id="restore-info"></p>
+  <div class="actions">
+    <button id="restore-discard">破棄する</button>
+    <button id="restore-later">今はしない</button>
+    <button id="restore-ok" class="primary">復元する</button>
+  </div>
+</dialog>
+
+<dialog id="pptx-dialog">
+  <h2>PowerPoint の読み込み</h2>
+  <p class="restore-info" id="pptx-name"></p>
+  <p class="opt-title">色とデザイン</p>
+  <label class="radio"><input type="radio" name="pptx-mode" value="keep"> 元の色・デザインのまま<span class="note">（背景色やスライドの装飾も背景として読み込む）</span></label>
+  <label class="radio"><input type="radio" name="pptx-mode" value="board"> 板書の色に合わせる<span class="note">（文字や線を既定色・赤・青・緑にそろえ、白地／黒板の切り替えに追随させる。背景は読み込まない）</span></label>
+  <p class="note" id="pptx-hint"></p>
+  <div id="pptx-where">
+    <p class="opt-title">読み込み先</p>
+    <label class="radio"><input type="radio" name="pptx-where" value="new"> 新しい板書として開く</label>
+    <label class="radio"><input type="radio" name="pptx-where" value="after"> 今のページの後ろに挿入する</label>
+    <label class="radio"><input type="radio" name="pptx-where" value="append"> 今の板書の最後に追加する</label>
+  </div>
+  <div class="actions">
+    <button id="pptx-cancel">キャンセル</button>
+    <button id="pptx-ok" class="primary">読み込む</button>
+  </div>
+</dialog>
+
+<dialog id="help-dialog">
+  <h2>ショートカット一覧</h2>
+  <div id="help-body"></div>
+  <div class="actions"><button id="help-close" class="primary">閉じる</button></div>
+</dialog>
+<div id="print-root"></div>
+
+<dialog id="print-guide">
+  <h2>PDF出力</h2>
+  <div class="theme-choice">
+    <p>出力する背景：</p>
+    <label class="radio"><input type="radio" name="print-theme" value="white" checked> 白地（配布用）</label>
+    <label class="radio"><input type="radio" name="print-theme" value="same"> 画面と同じ</label>
+  </div>
+  <p class="guide">次に開く印刷画面で、<b>送信先（プリンター）を「PDF として保存」</b>（Chrome では「PDF に保存」）にしてください。</p>
+  <p class="note guide">「Adobe PDF」「Microsoft Print to PDF」などのプリンターを選ぶと、16:9 の用紙を扱えないため、縦向きの用紙に回転して出力されます。</p>
+  <p class="note guide">蛍光ペンの色が出ないときは、「詳細設定」の「背景のグラフィック」にチェックを入れてください。</p>
+  <label class="guide"><input type="checkbox" id="print-guide-skip"> 次回から表示しない</label>
+  <div class="actions">
+    <button value="cancel" formmethod="dialog" id="print-guide-cancel">キャンセル</button>
+    <button id="print-guide-ok" class="primary">印刷画面を開く</button>
+  </div>
+</dialog>
+
+<script src="js/model.js"></script>
+<script src="js/ink.js"></script>
+<script src="js/rich.js"></script>
+<script src="js/geom.js"></script>
+<script src="js/view.js"></script>
+<script src="js/presenter.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/fileio.js"></script>
+<script src="js/pptx.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

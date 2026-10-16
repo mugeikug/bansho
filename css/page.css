@@ -1,0 +1,265 @@
+/* ページ内容の見た目。編集画面・提示画面・印刷で共通。
+   色は意味上の色名を CSS 変数で実際の色に対応づける（テーマ切り替えで意味を保つ）。 */
+
+/* 欧文（IPA 含む）は Segoe UI、和文は游ゴシック Medium。太字はそれぞれの Bold を当てる。
+   font-weight の数値だけで指定すると欧文が Semibold になり和文と太さが揃わないため。 */
+@font-face {
+  font-family: "BanshoLatin";
+  src: local("Segoe UI"), local("SegoeUI");
+  font-weight: 400;
+  unicode-range: U+0000-036F, U+1D00-1EFF, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "BanshoLatin";
+  src: local("Segoe UI Bold"), local("SegoeUI-Bold");
+  font-weight: 700;
+  unicode-range: U+0000-036F, U+1D00-1EFF, U+2C60-2C7F, U+A720-A7FF;
+}
+/* ギリシア文字・キリル文字は Segoe UI（和文フォントだと全角幅になる） */
+@font-face {
+  font-family: "BanshoGreek";
+  src: local("Segoe UI"), local("SegoeUI");
+  font-weight: 400;
+  unicode-range: U+0370-03FF, U+0400-04FF, U+1F00-1FFF;
+}
+@font-face {
+  font-family: "BanshoGreek";
+  src: local("Segoe UI Bold"), local("SegoeUI-Bold");
+  font-weight: 700;
+  unicode-range: U+0370-03FF, U+0400-04FF, U+1F00-1FFF;
+}
+@font-face {
+  font-family: "BanshoJa";
+  src: local("Yu Gothic Medium"), local("YuGothic-Medium"), local("游ゴシック Medium");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "BanshoJa";
+  src: local("Yu Gothic Bold"), local("YuGothic-Bold"), local("游ゴシック Bold");
+  font-weight: 700;
+}
+
+.bpage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--c-default);
+  font-family: "BanshoLatin", "BanshoGreek", "BanshoJa", "Yu Gothic", "Meiryo", sans-serif;
+  font-weight: 400;
+  line-height: 1.4;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  transform-origin: 0 0;
+}
+
+.theme-white {
+  --bg: #ffffff;
+  --c-default: #1a1a1a;
+  --c-red: #d62828;
+  --c-blue: #1d4ed8;
+  --c-green: #15803d;
+  --hl-yellow: #ffe100;
+  --hl-pink: #ff6fbf;
+  --hl-blue: #4cc3ff;
+  --hl-green: #6fdc6f;
+  --hl-opacity: 0.42;
+  /* 文字のマーカー（文字の背後に敷く半透明の色） */
+  --hlbg-yellow: rgba(255, 225, 0, 0.5);
+  --hlbg-pink: rgba(255, 111, 191, 0.38);
+  --hlbg-blue: rgba(76, 195, 255, 0.38);
+  --hlbg-green: rgba(111, 220, 111, 0.42);
+}
+
+.theme-board {
+  --bg: #1f3a2e;
+  --c-default: #f3f3ec;
+  --c-red: #ff8c8c;
+  --c-blue: #8cc4ff;
+  --c-green: #a8f0a0;
+  --hl-yellow: #fff06a;
+  --hl-pink: #ff9bd6;
+  --hl-blue: #7fd8ff;
+  --hl-green: #9cf59c;
+  --hl-opacity: 0.32;
+  --hlbg-yellow: rgba(255, 240, 106, 0.46);
+  --hlbg-pink: rgba(255, 155, 214, 0.42);
+  --hlbg-blue: rgba(127, 216, 255, 0.4);
+  --hlbg-green: rgba(156, 245, 156, 0.38);
+}
+
+.bpage .obj {
+  position: absolute;
+}
+
+.bpage svg.stroke,
+.bpage svg.shape {
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.bpage svg.stroke.marker {
+  opacity: var(--hl-opacity);
+}
+
+.bpage .text {
+  overflow-wrap: anywhere;
+}
+
+.bpage .text .content {
+  white-space: pre-wrap;
+  min-height: 1.4em;
+  min-width: 0.5em;
+  outline: none;
+}
+
+.bpage b,
+.bpage strong {
+  font-weight: 700;
+}
+
+.bpage u {
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.14em;
+}
+
+.bpage sub,
+.bpage sup {
+  font-size: 0.6em;
+  line-height: 0;
+}
+
+.bpage i,
+.bpage em {
+  font-style: italic;
+}
+
+/* ---- 文字の装飾（rich.js が出力するクラス） ---- */
+.bpage .c-red { color: var(--c-red); }
+.bpage .c-blue { color: var(--c-blue); }
+.bpage .c-green { color: var(--c-green); }
+
+.bpage .hl-yellow { background-color: var(--hlbg-yellow); }
+.bpage .hl-pink { background-color: var(--hlbg-pink); }
+.bpage .hl-blue { background-color: var(--hlbg-blue); }
+.bpage .hl-green { background-color: var(--hlbg-green); }
+
+.bpage [class^="hl-"],
+.bpage .deco-box {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.bpage .deco-box {
+  border: max(2px, 0.055em) solid currentColor;
+  padding: 0 0.12em;
+  margin: 0 0.06em;
+}
+
+/* 編集中だけ現れる一時的な書式（カーソル位置で装飾を選び、そのまま打ったとき）。
+   rich.js が確定時に上のクラスへ置き換える。 */
+.bpage font[face] { font-family: inherit; }
+.bpage font[face="bansho-box"] {
+  border: max(2px, 0.055em) solid currentColor;
+  padding: 0 0.12em;
+  margin: 0 0.06em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.bpage font[color="#000001"] { color: var(--c-default); }
+.bpage font[color="#000002"] { color: var(--c-red); }
+.bpage font[color="#000003"] { color: var(--c-blue); }
+.bpage font[color="#000004"] { color: var(--c-green); }
+.bpage [style*="background-color: rgb(0, 0, 5)"] { background-color: var(--hlbg-yellow) !important; }
+.bpage [style*="background-color: rgb(0, 0, 6)"] { background-color: var(--hlbg-pink) !important; }
+.bpage [style*="background-color: rgb(0, 0, 7)"] { background-color: var(--hlbg-blue) !important; }
+.bpage [style*="background-color: rgb(0, 0, 8)"] { background-color: var(--hlbg-green) !important; }
+.bpage [style*="background-color: rgb(0, 0, 9)"] { background-color: transparent !important; }
+
+/* 黒板（黒）：色は黒板（緑）と同じで背景だけ黒 */
+.theme-black {
+  --bg: #161616;
+  --c-default: #f3f3ec;
+  --c-red: #ff8c8c;
+  --c-blue: #8cc4ff;
+  --c-green: #a8f0a0;
+  --hl-yellow: #fff06a;
+  --hl-pink: #ff9bd6;
+  --hl-blue: #7fd8ff;
+  --hl-green: #9cf59c;
+  --hl-opacity: 0.32;
+  --hlbg-yellow: rgba(255, 240, 106, 0.46);
+  --hlbg-pink: rgba(255, 155, 214, 0.42);
+  --hlbg-blue: rgba(127, 216, 255, 0.4);
+  --hlbg-green: rgba(156, 245, 156, 0.38);
+}
+
+.bpage img.image {
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 下線の種類・色（PowerPoint から読み込んだ文字など） */
+.bpage u.ul-dbl { text-decoration-style: double; }
+.bpage u.ul-red { text-decoration-color: var(--c-red); }
+.bpage u.ul-blue { text-decoration-color: var(--c-blue); }
+.bpage u.ul-green { text-decoration-color: var(--c-green); }
+
+/* 欧文も游ゴシックで表示するテキスト（PowerPoint のテーマが游ゴシックのとき。空白で位置を揃えた文字がずれないように） */
+.bpage .text.f-ja {
+  font-family: "BanshoGreek", "BanshoJa", "Yu Gothic", YuGothic, "Meiryo", sans-serif;
+}
+
+/* ページの背景（PowerPoint のスライド背景・デザイン）。操作の対象にならない */
+.bpage .page-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  pointer-events: none;
+}
+
+/* 箇条書き：行頭の記号は行の書式（data-bu）として持ち、ぶら下げ字下げの位置に描く */
+.bpage .content div[data-bu]::before {
+  content: attr(data-bu);
+  display: inline-block;
+  width: var(--bw, 1em);
+  text-indent: 0;
+  font-size: calc(var(--bs, 1) * 1em);
+  vertical-align: calc((1 - var(--bs, 1)) * 0.25em);
+  color: var(--bc, inherit);
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* タブ：PowerPoint と同じく 1 インチ（論理座標 144px）ごと */
+.bpage .content {
+  tab-size: 144px;
+  -moz-tab-size: 144px;
+}
+
+/* 表 */
+.bpage .table .tbl {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.bpage .table td {
+  border: var(--tbw, 2px) solid var(--tb, var(--c-default));
+  padding: 6px 12px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.bpage .table td .content {
+  white-space: pre-wrap;
+  min-height: 1.2em;
+  outline: none;
+}
