@@ -421,6 +421,8 @@ window.B = window.B || {};
         }
         // 箇条書きの記号（短い文字列だけ）
         if (a.name === 'data-bu' && child.tagName === 'DIV' && a.value.length <= 6 && !/[<>&"]/.test(a.value)) continue;
+        if (a.name === 'data-ol' && child.tagName === 'DIV' && B.OL_FORMATS.includes(a.value)) continue;
+        if (a.name === 'data-lv' && child.tagName === 'DIV' && /^[0-4]$/.test(a.value)) continue;
         if (a.name !== 'class') child.removeAttribute(a.name);
       }
       if (child.hasAttribute('class')) {

@@ -13,6 +13,7 @@
   B.CLIP_PREFIX = 'BANSHO-CLIP:'; // 板書内のコピーをクリップボードに載せるときの目印
   B.INDENT_STEP = 1.5;            // 字下げ 1 段（em）
   B.BULLET_W = 1.0;               // 箇条書きの記号の幅（em）
+  B.NUMBER_W = 1.6;               // 番号の幅（em）
   B.BULLETS = ['•', '–', '▪', '◦', '›'];   // 段ごとの記号
   B.SHAPES = ['line', 'arrow', 'rect', 'ellipse'];
 
@@ -892,14 +893,30 @@
     }
 
     // dir: +1 で 1 段深く、-1 で浅く
+    // 行の段（0 から）。箇条書き・番号の記号の幅を除いた左の余白から求める
+    lineLevel(a) {
+      if (a.lv != null) return a.lv;
+      const bw = a.bu || a.ol ? a.bw || B.BULLET_W : 0;
+      return Math.max(0, Math.round(((a.pl || 0) - bw) / B.INDENT_STEP));
+    }
+
+    // 段 level・記号の幅 bw のときの行の書式
+    levelAttrs(level, bw) {
+      const r = { pl: Math.round((level * B.INDENT_STEP + bw) * 1000) / 1000 || null, lv: level };
+      r.ti = bw ? -bw : null;
+      return r;
+    }
+
+    // dir: +1 で 1 段深く、-1 で浅く
     indentLines(dir) {
-      const STEP = B.INDENT_STEP;
       return this.changeLines((a) => {
-        const bw = a.bu ? a.bw || B.BULLET_W : 0;
-        const level = Math.max(0, Math.round(((a.pl || 0) - bw) / STEP));
-        const nl = Math.max(0, Math.min(8, level + dir));
+        const list = a.bu || a.ol;
+        const bw = list ? a.bw || B.BULLET_W : 0;
+        const level = this.lineLevel(a);
+        const nl = Math.max(0, Math.min(4, level + dir));
         if (nl === level && !(dir < 0 && (a.pl || 0) - bw > 0.01)) return null;
-        const r = { pl: Math.round((nl * STEP + bw) * 1000) / 1000 || null };
+        const r = this.levelAttrs(nl, bw);
+        if (!list) { r.ti = a.ti || null; if (!nl) r.lv = null; }
         if (a.bu && B.BULLETS.includes(a.bu)) r.bu = B.BULLETS[nl % B.BULLETS.length];
         return r;
       });
@@ -910,17 +927,72 @@
       let allOn = null;
       return this.changeLines((a, lines, flat) => {
         if (allOn === null) allOn = lines.every((ln) => B.rich.lineAttrsOf(flat, ln).bu);
-        const STEP = B.INDENT_STEP;
-        if (allOn) {
-          const bw = a.bw || B.BULLET_W;
-          const pl = Math.max(0, (a.pl || 0) - bw);
-          return { bu: null, bw: null, bc: null, bs: null, ti: null, pl: Math.round(pl * 1000) / 1000 || null };
-        }
+        if (allOn) return this.listOff(a);
         if (a.bu) return null;
-        const level = Math.max(0, Math.round((a.pl || 0) / STEP));
-        const bw = B.BULLET_W;
-        return { bu: B.BULLETS[level % B.BULLETS.length], bw, ti: -bw, pl: Math.round((level * STEP + bw) * 1000) / 1000 };
+        const level = this.lineLevel(a);
+        return Object.assign({ bu: B.BULLETS[level % B.BULLETS.length], ol: null, bc: null, bs: null, bw: B.BULLET_W }, this.levelAttrs(level, B.BULLET_W));
       });
+    }
+
+    // 番号付きリストのオン・オフ。fmt: '1.' 'a)' 'i.' など（選んだ行がすべてその形式なら外す）
+    toggleNumbering(fmt) {
+      let allOn = null;
+      return this.changeLines((a, lines, flat) => {
+        if (allOn === null) allOn = lines.every((ln) => B.rich.lineAttrsOf(flat, ln).ol === fmt);
+        if (allOn) return this.listOff(a);
+        const level = this.lineLevel(a);
+        return Object.assign({ ol: fmt, bu: null, bc: null, bs: null, bw: B.NUMBER_W }, this.levelAttrs(level, B.NUMBER_W));
+      });
+    }
+
+    listOff(a) {
+      const level = this.lineLevel(a);
+      return { bu: null, ol: null, bw: null, bc: null, bs: null, ti: null, pl: Math.round(level * B.INDENT_STEP * 1000) / 1000 || null, lv: level || null };
+    }
+
+    // 行の揃え（'left' | 'center' | 'right'）。文字入力中は選んだ行、選択ツールではボックス全体
+    alignLines(ta) {
+      if (this.ts) return this.changeLines(() => ({ ta }));
+      return this.formatSelectedLines(() => ({ ta }));
+    }
+
+    // 選択中のテキストボックス・表のすべての行に行の書式を適用する
+    formatSelectedLines(fn) {
+      const conv = (html) => {
+        const flat = B.rich.parseHtml(html);
+        for (const ln of B.rich.lineList(flat)) {
+          const next = fn(B.rich.lineAttrsOf(flat, ln));
+          if (next) B.rich.setLineAttrs(flat, ln, next);
+        }
+        return B.rich.render(flat);
+      };
+      const ids = new Set(this.selectedTexts().map((o) => o.id));
+      if (!ids.size) return false;
+      return this.modifySelection((o) => {
+        if (!ids.has(o.id)) return null;
+        const c = B.cloneObj(o);
+        if (c.type === 'table') for (const row of c.cells) for (const cell of row) cell.html = conv(cell.html);
+        else { c.html = conv(c.html); delete c.align; }
+        return c;
+      });
+    }
+
+    // ツールバー表示用：選択範囲の最初の行の書式
+    lineState() {
+      const ts = this.ts;
+      if (!ts) {
+        const t = this.selectedTexts()[0];
+        if (!t || t.type !== 'text') return null;
+        const flat = B.rich.parseHtml(t.html);
+        return Object.assign({ ta: t.align || null }, B.rich.lineAttrsOf(flat, B.rich.lineList(flat)[0]));
+      }
+      const pts = this.selPoints(ts.content);
+      if (!pts.length) return null;
+      const { flat, offs } = B.rich.parse(ts.content, pts);
+      const s0 = Math.min(offs[0], offs[1]);
+      const ln = B.rich.lineList(flat).find((l) => l.end >= s0) || B.rich.lineList(flat)[0];
+      const obj = this.editingObj();
+      return Object.assign({ ta: obj && obj.align || null }, B.rich.lineAttrsOf(flat, ln));
     }
 
     // Tab：行頭（箇条書き・字下げのある行）や複数行の選択では字下げ、それ以外はタブ文字
@@ -937,7 +1009,7 @@
       const a = B.rich.lineAttrsOf(flat, ln);
       const atStart = s === ln.start;
       if (shift) { this.indentLines(-1); return; }
-      if (lines.length > 1 || (atStart && (a.bu || (a.pl || 0) > 0))) { this.indentLines(1); return; }
+      if (lines.length > 1 || (atStart && (a.bu || a.ol || (a.pl || 0) > 0))) { this.indentLines(1); return; }
       document.execCommand('insertText', false, '\t');
     }
 

@@ -238,7 +238,8 @@
 .bpage .content div[data-bu]::before {
   content: attr(data-bu);
   display: inline-block;
-  width: var(--bw, 1em);
+  min-width: var(--bw, 1em);
+  white-space: nowrap;
   text-indent: 0;
   font-size: calc(var(--bs, 1) * 1em);
   vertical-align: calc((1 - var(--bs, 1)) * 0.25em);
@@ -269,3 +270,92 @@
   min-height: 1.2em;
   outline: none;
 }
+
+/* 枠の色（四角囲み） */
+.bpage .deco-box.deco-default, .bpage font[face="bansho-box-default"] { border-color: var(--c-default); }
+.bpage .deco-box.deco-red, .bpage font[face="bansho-box-red"] { border-color: var(--c-red); }
+.bpage .deco-box.deco-blue, .bpage font[face="bansho-box-blue"] { border-color: var(--c-blue); }
+.bpage .deco-box.deco-green, .bpage font[face="bansho-box-green"] { border-color: var(--c-green); }
+.bpage .deco-box.deco-gray, .bpage font[face="bansho-box-gray"] { border-color: var(--c-gray); }
+.bpage font[face^="bansho-box-"] {
+  border: max(2px, 0.055em) solid currentColor;
+  padding: 0 0.12em;
+  margin: 0 0.06em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.bpage font[face="bansho-box-default"], .bpage font[face="bansho-box-red"], .bpage font[face="bansho-box-blue"], .bpage font[face="bansho-box-green"], .bpage font[face="bansho-box-gray"] { border-style: solid; }
+
+/* 番号付きリスト：段ごとのカウンター。番号のない行（段の指定もない行）で数え直す。
+   深い段の行は、それより深い段だけを数え直す（上の段の番号は続く） */
+.bpage .content { counter-reset: ol0 ol1 ol2 ol3 ol4; }
+.bpage .content > div:not([data-lv]) { counter-reset: ol0 ol1 ol2 ol3 ol4; }
+.bpage .content > div[data-lv="0"] { counter-reset: ol1 ol2 ol3 ol4; }
+.bpage .content > div[data-lv="1"] { counter-reset: ol2 ol3 ol4; }
+.bpage .content > div[data-lv="2"] { counter-reset: ol3 ol4; }
+.bpage .content > div[data-lv="3"] { counter-reset: ol4; }
+.bpage .content > div[data-lv="4"] { counter-reset: none; }
+.bpage .content > div[data-ol][data-lv="0"] { counter-increment: ol0; }
+.bpage .content > div[data-ol][data-lv="1"] { counter-increment: ol1; }
+.bpage .content > div[data-ol][data-lv="2"] { counter-increment: ol2; }
+.bpage .content > div[data-ol][data-lv="3"] { counter-increment: ol3; }
+.bpage .content > div[data-ol][data-lv="4"] { counter-increment: ol4; }
+.bpage .content div[data-ol]::before {
+  display: inline-block;
+  min-width: var(--bw, 1.6em);
+  text-indent: 0;
+  color: var(--bc, inherit);
+  font-weight: 400;
+  font-style: normal;
+  white-space: nowrap;
+}
+.bpage .content div[data-ol="1."][data-lv="0"]::before { content: counter(ol0, decimal) "."; }
+.bpage .content div[data-ol="1."][data-lv="1"]::before { content: counter(ol1, decimal) "."; }
+.bpage .content div[data-ol="1."][data-lv="2"]::before { content: counter(ol2, decimal) "."; }
+.bpage .content div[data-ol="1."][data-lv="3"]::before { content: counter(ol3, decimal) "."; }
+.bpage .content div[data-ol="1."][data-lv="4"]::before { content: counter(ol4, decimal) "."; }
+.bpage .content div[data-ol="1)"][data-lv="0"]::before { content: counter(ol0, decimal) ")"; }
+.bpage .content div[data-ol="1)"][data-lv="1"]::before { content: counter(ol1, decimal) ")"; }
+.bpage .content div[data-ol="1)"][data-lv="2"]::before { content: counter(ol2, decimal) ")"; }
+.bpage .content div[data-ol="1)"][data-lv="3"]::before { content: counter(ol3, decimal) ")"; }
+.bpage .content div[data-ol="1)"][data-lv="4"]::before { content: counter(ol4, decimal) ")"; }
+.bpage .content div[data-ol="(1)"][data-lv="0"]::before { content: "(" counter(ol0, decimal) ")"; }
+.bpage .content div[data-ol="(1)"][data-lv="1"]::before { content: "(" counter(ol1, decimal) ")"; }
+.bpage .content div[data-ol="(1)"][data-lv="2"]::before { content: "(" counter(ol2, decimal) ")"; }
+.bpage .content div[data-ol="(1)"][data-lv="3"]::before { content: "(" counter(ol3, decimal) ")"; }
+.bpage .content div[data-ol="(1)"][data-lv="4"]::before { content: "(" counter(ol4, decimal) ")"; }
+.bpage .content div[data-ol="i."][data-lv="0"]::before { content: counter(ol0, lower-roman) "."; }
+.bpage .content div[data-ol="i."][data-lv="1"]::before { content: counter(ol1, lower-roman) "."; }
+.bpage .content div[data-ol="i."][data-lv="2"]::before { content: counter(ol2, lower-roman) "."; }
+.bpage .content div[data-ol="i."][data-lv="3"]::before { content: counter(ol3, lower-roman) "."; }
+.bpage .content div[data-ol="i."][data-lv="4"]::before { content: counter(ol4, lower-roman) "."; }
+.bpage .content div[data-ol="i)"][data-lv="0"]::before { content: counter(ol0, lower-roman) ")"; }
+.bpage .content div[data-ol="i)"][data-lv="1"]::before { content: counter(ol1, lower-roman) ")"; }
+.bpage .content div[data-ol="i)"][data-lv="2"]::before { content: counter(ol2, lower-roman) ")"; }
+.bpage .content div[data-ol="i)"][data-lv="3"]::before { content: counter(ol3, lower-roman) ")"; }
+.bpage .content div[data-ol="i)"][data-lv="4"]::before { content: counter(ol4, lower-roman) ")"; }
+.bpage .content div[data-ol="I."][data-lv="0"]::before { content: counter(ol0, upper-roman) "."; }
+.bpage .content div[data-ol="I."][data-lv="1"]::before { content: counter(ol1, upper-roman) "."; }
+.bpage .content div[data-ol="I."][data-lv="2"]::before { content: counter(ol2, upper-roman) "."; }
+.bpage .content div[data-ol="I."][data-lv="3"]::before { content: counter(ol3, upper-roman) "."; }
+.bpage .content div[data-ol="I."][data-lv="4"]::before { content: counter(ol4, upper-roman) "."; }
+.bpage .content div[data-ol="a."][data-lv="0"]::before { content: counter(ol0, lower-alpha) "."; }
+.bpage .content div[data-ol="a."][data-lv="1"]::before { content: counter(ol1, lower-alpha) "."; }
+.bpage .content div[data-ol="a."][data-lv="2"]::before { content: counter(ol2, lower-alpha) "."; }
+.bpage .content div[data-ol="a."][data-lv="3"]::before { content: counter(ol3, lower-alpha) "."; }
+.bpage .content div[data-ol="a."][data-lv="4"]::before { content: counter(ol4, lower-alpha) "."; }
+.bpage .content div[data-ol="a)"][data-lv="0"]::before { content: counter(ol0, lower-alpha) ")"; }
+.bpage .content div[data-ol="a)"][data-lv="1"]::before { content: counter(ol1, lower-alpha) ")"; }
+.bpage .content div[data-ol="a)"][data-lv="2"]::before { content: counter(ol2, lower-alpha) ")"; }
+.bpage .content div[data-ol="a)"][data-lv="3"]::before { content: counter(ol3, lower-alpha) ")"; }
+.bpage .content div[data-ol="a)"][data-lv="4"]::before { content: counter(ol4, lower-alpha) ")"; }
+.bpage .content div[data-ol="A."][data-lv="0"]::before { content: counter(ol0, upper-alpha) "."; }
+.bpage .content div[data-ol="A."][data-lv="1"]::before { content: counter(ol1, upper-alpha) "."; }
+.bpage .content div[data-ol="A."][data-lv="2"]::before { content: counter(ol2, upper-alpha) "."; }
+.bpage .content div[data-ol="A."][data-lv="3"]::before { content: counter(ol3, upper-alpha) "."; }
+.bpage .content div[data-ol="A."][data-lv="4"]::before { content: counter(ol4, upper-alpha) "."; }
+.bpage .content div[data-ol="A)"][data-lv="0"]::before { content: counter(ol0, upper-alpha) ")"; }
+.bpage .content div[data-ol="A)"][data-lv="1"]::before { content: counter(ol1, upper-alpha) ")"; }
+.bpage .content div[data-ol="A)"][data-lv="2"]::before { content: counter(ol2, upper-alpha) ")"; }
+.bpage .content div[data-ol="A)"][data-lv="3"]::before { content: counter(ol3, upper-alpha) ")"; }
+.bpage .content div[data-ol="A)"][data-lv="4"]::before { content: counter(ol4, upper-alpha) ")"; }

@@ -17,6 +17,7 @@
     textPt: 24,
     textMarker: 'yellow', // Ctrl+H でかけるマーカーの色（最後に使った色）
     eraserMode: 'stroke', // 'stroke'（線ごと）| 'partial'（部分）
+    olFormat: '1.',       // 番号付きリストの形式（最後に選んだもの）
     eraserSize: 1,
   };
 
@@ -162,7 +163,7 @@
   }
   document.addEventListener('pointerdown', (e) => {
     for (const m of $$('.popup')) {
-      if (!m.hidden && !m.contains(e.target) && !e.target.closest('#btn-table, #btn-tableops, #fs-drop')) m.hidden = true;
+      if (!m.hidden && !m.contains(e.target) && !e.target.closest('#btn-table, #btn-tableops, #fs-drop, [data-menu]')) m.hidden = true;
     }
   }, true);
 
@@ -293,24 +294,61 @@
       b.innerHTML = `<span style="color:var(--c-${key})">A</span><i style="background:var(--c-${key})"></i>`;
       tc.appendChild(b);
     });
+    // マーカー：最後に使った色のボタン＋▾（色を選ぶ）
     const tm = $('#text-markers');
-    tm.className = 'theme-' + store.doc.theme;
-    tm.textContent = '';
-    for (const [key, label] of MARKER_COLORS) {
-      const b = document.createElement('button');
-      b.className = 'fmt tmarker';
-      b.dataset.fmt = 'h';
-      b.dataset.val = key;
-      b.title = `マーカー：${label} (Ctrl+H)`;
-      b.innerHTML = `<span style="background:var(--hl-${key})">ab</span>`;
-      tm.appendChild(b);
-    }
+    tm.className = 'split theme-' + store.doc.theme;
+    tm.innerHTML = `<button class="fmt tmarker main" data-fmt="h" data-val="${state.textMarker}" title="マーカー (Ctrl+H)"><span style="background:var(--hl-${state.textMarker})">ab</span></button><button class="drop" data-menu="marker-menu" title="マーカーの色">▾</button>`;
+    buildMenus();
   }
 
   // ---- 文字の大きさ（pt） ----
 
   const fsInput = $('#fs-input');
   const fsMenu = $('#fs-menu');
+
+  // ▾ のメニュー（下線の色・枠の色・マーカーの色・番号の形式）
+  const COLOR_CHOICES = [['', '文字と同じ'], ['default', '既定色'], ['red', '赤'], ['blue', '青'], ['green', '緑'], ['gray', 'グレー']];
+  function buildMenus() {
+    const theme = 'theme-' + store.doc.theme;
+    const sw = (c) => (c ? `<span class="sw" style="background:var(--c-${c})"></span>` : '<span class="sw" style="border:2px solid currentColor;box-sizing:border-box"></span>');
+    const um = $('#ul-menu');
+    um.className = 'popup menu-colors ' + theme;
+    um.innerHTML = '<div class="mtitle">一重線</div><div class="row">' + COLOR_CHOICES.map(([c, l]) => `<button data-ul="sng:${c}" title="${l}">${sw(c)}</button>`).join('') + '</div>'
+      + '<div class="mtitle">二重線</div><div class="row">' + COLOR_CHOICES.map(([c, l]) => `<button data-ul="dbl:${c}" title="${l}">${sw(c)}</button>`).join('') + '</div>';
+    const bm = $('#box-menu');
+    bm.className = 'popup menu-colors ' + theme;
+    bm.innerHTML = '<div class="mtitle">枠の色</div><div class="row">' + COLOR_CHOICES.map(([c, l]) => `<button data-box="${c}" title="${l}">${sw(c)}</button>`).join('') + '</div>';
+    const mm = $('#marker-menu');
+    mm.className = 'popup menu-colors ' + theme;
+    mm.innerHTML = '<div class="mtitle">マーカーの色</div><div class="row">' + MARKER_COLORS.map(([c, l]) => `<button data-marker="${c}" title="${l}"><span style="background:var(--hl-${c});padding:1px 5px">ab</span></button>`).join('') + '</div>';
+    const om = $('#ol-menu');
+    const sample = { '1.': '1. 2. 3.', '1)': '1) 2) 3)', '(1)': '(1) (2) (3)', 'i.': 'i. ii. iii.', 'i)': 'i) ii) iii)', 'I.': 'I. II. III.', 'a.': 'a. b. c.', 'a)': 'a) b) c)', 'A.': 'A. B. C.', 'A)': 'A) B) C)' };
+    om.innerHTML = B.OL_FORMATS.map((f) => `<button data-ol="${f}">${sample[f]}</button>`).join('');
+  }
+  document.addEventListener('click', (e) => {
+    const d = e.target.closest('[data-menu]');
+    if (d) { openPopup($('#' + d.dataset.menu), d); return; }
+    const pick = e.target.closest('[data-ul], [data-box], [data-marker], [data-ol], [data-align]');
+    if (!pick || !pick.closest('.popup')) return;
+    pick.closest('.popup').hidden = true;
+    if (pick.dataset.ul != null) {
+      const [st, c] = pick.dataset.ul.split(':');
+      applyFormat('u', st === 'sng' && !c ? true : st + (c ? ':' + c : ''));
+    } else if (pick.dataset.box != null) {
+      applyFormat('x', pick.dataset.box || true);
+    } else if (pick.dataset.marker) {
+      state.textMarker = pick.dataset.marker;
+      buildTextOpts();
+      applyFormat('h', pick.dataset.marker);
+    } else if (pick.dataset.ol) {
+      state.olFormat = pick.dataset.ol;
+      editor.toggleNumbering(pick.dataset.ol);
+      updateFormatState();
+    } else if (pick.dataset.align) {
+      editor.alignLines(pick.dataset.align);
+      updateFormatState();
+    }
+  });
 
   function renderTextSizes() {
     if (document.activeElement === fsInput) return; // 入力中は書き換えない
@@ -393,7 +431,7 @@
 
   function applyFormat(key, val) {
     if (val === undefined) val = true;
-    if (key === 'h') state.textMarker = val;
+    if (key === 'h' && val !== state.textMarker) { state.textMarker = val; buildTextOpts(); }
     if (editor.ts) editor.formatText(key, val);
     else if (state.tool === 'select') editor.formatSelectedTexts(key, val);
     updateFormatState();
@@ -416,6 +454,14 @@
       }
       b.classList.toggle('on', on);
     }
+    const ls = editor.lineState();
+    $('#btn-bullets').classList.toggle('on', !!(ls && ls.bu && !ls.ol));
+    $('#btn-numbering').classList.toggle('on', !!(ls && ls.ol));
+    const ta = (ls && ls.ta) || 'left';
+    const icon = $(`#align-menu [data-align="${ta}"] svg`);
+    if (icon) $('#btn-align').innerHTML = icon.outerHTML;
+    for (const b of $$('#align-menu [data-align]')) b.classList.toggle('on', b.dataset.align === ta);
+    for (const b of $$('#ol-menu [data-ol]')) b.classList.toggle('on', !!ls && ls.ol === b.dataset.ol);
   }
   document.addEventListener('selectionchange', () => { if (editor.ts) { updateFormatState(); renderTextSizes(); } });
   editor.onEditingChange = () => {
@@ -455,6 +501,7 @@
     image: () => imageFile.click(),
     table: () => openPopup($('#table-picker'), $('#btn-table')),
     bullets: () => { if (editor.toggleBullets()) updateFormatState(); },
+    numbering: () => { if (editor.toggleNumbering(state.olFormat)) updateFormatState(); },
     indent: () => editor.indentLines(1),
     outdent: () => editor.indentLines(-1),
     tableops: () => openPopup($('#table-ops'), $('#btn-tableops')),
@@ -809,6 +856,7 @@
       ['Ctrl+Shift+> / <（Ctrl+] / [）', '文字を1段階大きく / 小さく'],
       ['Tab / Shift+Tab', '行頭（箇条書き・字下げのある行）や複数行の選択では字下げを深く / 浅く。それ以外はタブ文字。表では次 / 前のセルへ'],
       ['Ctrl+Shift+L', '箇条書きのオン・オフ'],
+      ['（ツールバー）', '番号付きリスト・行の揃え・下線の色と二重線・枠の色は ▾ から選ぶ'],
       ['Esc', '文字の入力を終える'],
     ]],
     ['編集', [

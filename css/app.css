@@ -435,6 +435,19 @@ label.radio { display: block; margin: 2px 0 2px 8px; font-size: 14px; }
 #table-grid i.on { background: var(--ui-accent-bg); border-color: var(--ui-accent); }
 #table-size { text-align: center; font-size: 12px; color: var(--ui-muted); padding: 2px 0 4px; }
 #table-ops button { text-align: left; }
+/* ボタン＋▾ の組 */
+.split { display: inline-flex; }
+.split > button:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.split > .drop { width: 15px; min-width: 15px; padding: 0; border-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; font-size: 9px; color: var(--ui-muted); }
+#btn-align { width: 38px; }
+.menu-colors { padding: 6px; }
+.menu-colors .mtitle { font-size: 12px; color: var(--ui-muted); margin: 2px 4px 4px; text-align: left; }
+.menu-colors .row { display: flex; gap: 4px; margin-bottom: 6px; }
+.menu-colors .row button { width: auto; min-width: 34px; text-align: center; padding: 2px 6px; }
+.menu-colors .sw { display: inline-block; width: 18px; height: 18px; border-radius: 4px; vertical-align: -4px; }
+#ol-menu button, #align-menu button { text-align: left; white-space: nowrap; }
+#align-menu .ico-svg, #ol-menu .ico-svg { display: inline-block; vertical-align: -4px; margin-right: 6px; }
+.tmarker.main span { padding: 1px 5px; }
 #table-ops hr { border: 0; border-top: 1px solid var(--ui-border); margin: 4px 0; }
 #pptx-dialog .opt-title { margin: 12px 0 2px; font-weight: 700; }
 #pptx-dialog label.radio { margin: 4px 0 4px 8px; }

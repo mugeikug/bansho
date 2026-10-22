@@ -645,7 +645,7 @@
         else if (sb && path(sb, 'spcPct')) mt = num(path(sb, 'spcPct').getAttribute('val'), 0) / 100000 * at0.pt * 2 * 1.2;
         mt *= 1 - lnRed;
       }
-      let ln = { pl: marL, ti: indent, mt, ta };
+      let ln = { pl: marL, ti: indent, mt, ta, lv: Math.min(4, lvl) };
       const push = (ch, a, pt, ja) => { flat.push({ ch, a, ln }); sizes.push(pt); jaFlags.push(ja); };
 
       // 箇条書きの記号：行の書式（bu）にする。ぶら下げ字下げの幅（-indent）を記号の幅にして、本文を marL から始める
@@ -662,9 +662,12 @@
         counters.length = lvl + 1;
         if (bu && !bu.none) {
           let text;
+          const OL = { arabicPeriod: '1.', arabicParenR: '1)', arabicParenBoth: '(1)', romanLcPeriod: 'i.', romanLcParenR: 'i)', romanUcPeriod: 'I.', alphaLcPeriod: 'a.', alphaLcParenR: 'a)', alphaUcPeriod: 'A.', alphaUcParenR: 'A)' };
           if (bu.auto) {
             counters[lvl] = (counters[lvl] || bu.start - 1) + 1;
             text = autoNum(bu.auto, counters[lvl]);
+            // 板書の番号付きリストで表せる形式なら、番号を自動で振る形にする（1 から始まるもののみ）
+            if (OL[bu.auto] && bu.start === 1 && lvl <= 4) ln.ol = OL[bu.auto];
           } else {
             const font = P((e) => { const bf = kid(e, 'buFont'); return bf ? bf.getAttribute('typeface') : undefined; });
             text = bulletChar(bu.ch, font);
@@ -683,13 +686,13 @@
       for (const r of runs) {
         if (r.localName === 'br') {
           flat.push({ ch: '\n', a: {} }); sizes.push(0); jaFlags.push(false);
-          ln = { pl: marL, ti: 0, mt: 0, ta }; // 段落内の改行のあとは本文の開始位置から
+          ln = { pl: marL, ti: 0, mt: 0, ta, lv: Math.min(4, lvl) }; // 段落内の改行のあとは本文の開始位置から
           continue;
         }
         const at = attrsOf(kid(r, 'rPr'), pPr, chain, lvl, ctx, fontScale, opts);
         const text = (kid(r, 't') || {}).textContent || '';
         for (const ch of text) {
-          if (ch === '\n') { flat.push({ ch: '\n', a: {} }); sizes.push(0); jaFlags.push(false); ln = { pl: marL, ti: 0, mt: 0, ta }; continue; }
+          if (ch === '\n') { flat.push({ ch: '\n', a: {} }); sizes.push(0); jaFlags.push(false); ln = { pl: marL, ti: 0, mt: 0, ta, lv: Math.min(4, lvl) }; continue; }
           push(ch, at.a, at.pt, at.ja);
         }
       }
@@ -783,8 +786,10 @@
         if (Math.abs(c.ln.pl) > 0.5) extra.pl = em(c.ln.pl);
         if (Math.abs(c.ln.ti) > 0.5) extra.ti = em(c.ln.ti);
         if (c.ln.mt > 0.5) extra.mt = em(c.ln.mt);
+        if (c.ln.bu || (c.ln.pl && c.ln.lv)) extra.lv = c.ln.lv;
         if (c.ln.bu) {
-          extra.bu = c.ln.bu;
+          if (c.ln.ol) extra.ol = c.ln.ol;
+          else extra.bu = c.ln.bu;
           extra.bw = em(c.ln.bw);
           if (c.ln.bc) extra.bc = c.ln.bc;
           if (c.ln.bs) extra.bs = c.ln.bs;

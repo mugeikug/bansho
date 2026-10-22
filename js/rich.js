@@ -6,12 +6,14 @@
 //
 // 書式キー（外側から内側の順に入れ子にする）
 //   z: 文字の大きさ（ボックスの基準サイズに対する倍率。1 なら指定なし）
-//   x: 四角囲み(true)  h: マーカー色  c: 文字色（意味上の色名、または PowerPoint から読み込んだ '#rrggbb'）
+//   x: 四角囲み（true＝文字と同じ色、または枠の色の名前）  h: マーカー色  c: 文字色（意味上の色名、または PowerPoint から読み込んだ '#rrggbb'）
 //   b: 太字  i: 斜体  k: 取り消し線  s: 'sub' | 'sup'
 //   f: フォント名（PowerPoint から読み込んだ特殊なフォント。普段の入力では使わない）
 //   u: 下線。true（普通の下線）または 'sng' / 'dbl'（二重線）に ':色' を付けた文字列（例 'dbl:red', 'sng:#ff0000'）
 // 行の書式（各文字に持たせ、行の先頭の文字の値を使う。KEYS には含めない）
 //   pl: 左の余白（em）  ti: 1 行目の字下げ（em、負ならぶら下げ）  mt: 段落の前の間隔（em）  ta: 'center' | 'right'
+//   ol: 番号付きリストの形式（'1.' '1)' '(1)' 'i.' 'i)' 'I.' 'a.' 'a)' 'A.' 'A)'。番号は CSS のカウンターで自動）
+//   lv: 箇条書き・番号の段（0〜4。番号の数え直しに使う）
 //   bu: 箇条書きの記号（文字列）  bw: 記号の幅（em）  bc: 記号の色（意味上の色名か '#rrggbb'）  bs: 記号の大きさ（倍率）
 //   空の行の書式は、その行の前の改行文字に持たせる（行頭の文字がないため）
 //   行の書式がある文字列は、各行を <div style="..."> にして出力する（ない場合は <br> で区切る）
@@ -73,7 +75,10 @@
 
   const isHex = (v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
   const SEM = /^(red|blue|green|gray)$/;
+  const SEM_ALL = /^(default|red|blue|green|gray)$/;
   B.isColorValue = (v) => isHex(v) || SEM.test(v || '');
+  B.OL_FORMATS = ['1.', '1)', '(1)', 'i.', 'i)', 'I.', 'a.', 'a)', 'A.', 'A)'];
+  B.isOlFormat = (v) => B.OL_FORMATS.includes(v);
   B.isBullet = (v) => typeof v === 'string' && v.length > 0 && v.length <= 6 && !/[<>&"]/.test(v);
   B.isFontName = (v) => typeof v === 'string' && /^[^'"<>;\\{}()]{1,80}$/.test(v);
 
@@ -110,6 +115,7 @@
         if (c) a = set(a, 'c', cval(c));
         const f = el.getAttribute('face');
         if (f === BOX_ON) a = set(a, 'x', true);
+        else if (f && f.startsWith(BOX_ON + '-') && SEM_ALL.test(f.slice(BOX_ON.length + 1))) a = set(a, 'x', f.slice(BOX_ON.length + 1));
         else if (f === BOX_OFF) a = set(a, 'x', null);
         break;
       }
@@ -119,7 +125,10 @@
         let m;
         if ((m = /^c-([a-z]+)$/.exec(cls))) a = set(a, 'c', cval(m[1]));
         else if ((m = /^hl-([a-z]+)$/.exec(cls))) a = set(a, 'h', m[1]);
-        else if (cls === 'deco-box') a = set(a, 'x', true);
+        else if (cls === 'deco-box') {
+          const col = Array.from(el.classList).map((c) => /^deco-(default|red|blue|green|gray)$/.exec(c)).find(Boolean);
+          a = set(a, 'x', col ? col[1] : true);
+        }
       }
     }
     const st = el.style;
@@ -156,7 +165,7 @@
         if (st.paddingLeft) a = set(a, 'pl', em(st.paddingLeft));
         if (st.textIndent) a = set(a, 'ti', em(st.textIndent));
         if (st.marginTop) a = set(a, 'mt', em(st.marginTop));
-        if (st.textAlign === 'center' || st.textAlign === 'right') a = set(a, 'ta', st.textAlign);
+        if (st.textAlign === 'center' || st.textAlign === 'right' || st.textAlign === 'left') a = set(a, 'ta', st.textAlign);
         else if (st.textAlign) a = set(a, 'ta', null);
         const bw = em(st.getPropertyValue('--bw').trim());
         if (bw != null) a = set(a, 'bw', bw);
@@ -165,9 +174,11 @@
         const bs = parseFloat(st.getPropertyValue('--bs'));
         if (bs > 0) a = set(a, 'bs', bs);
       }
-      if (BLOCK.has(el.tagName) && el.hasAttribute('data-bu')) {
-        a = set(a, 'bu', el.getAttribute('data-bu') || null);
-      }
+    }
+    if (BLOCK.has(el.tagName)) {
+      if (el.hasAttribute('data-bu')) a = set(a, 'bu', el.getAttribute('data-bu') || null);
+      if (el.hasAttribute('data-ol')) a = set(a, 'ol', B.isOlFormat(el.getAttribute('data-ol')) ? el.getAttribute('data-ol') : null);
+      if (el.hasAttribute('data-lv')) { const lv = Number(el.getAttribute('data-lv')); a = set(a, 'lv', lv >= 0 && lv <= 4 ? lv : null); }
     }
     return a;
   }
@@ -261,7 +272,7 @@
       case 'z': return `<span style="font-size:${v}em">${inner}</span>`;
       case 'f': return B.isFontName(v) ? `<span style="font-family:'${v}'">${inner}</span>` : inner;
       case 'k': return `<s>${inner}</s>`;
-      case 'x': return `<span class="deco-box">${inner}</span>`;
+      case 'x': return `<span class="deco-box${v !== true && SEM_ALL.test(v) ? ' deco-' + v : ''}">${inner}</span>`;
       case 'h': return `<span class="hl-${v}">${inner}</span>`;
       case 'c': return isHex(v) ? `<span style="color:${v.toLowerCase()}">${inner}</span>` : `<span class="c-${v}">${inner}</span>`;
       case 'u': {
@@ -306,12 +317,20 @@
       if (a.ti) css.push(`text-indent:${a.ti}em`);
       if (a.mt) css.push(`margin-top:${a.mt}em`);
       if (a.ta) css.push(`text-align:${a.ta}`);
-      if (a.bu && a.bw) css.push(`--bw:${a.bw}em`);
-      if (a.bu && a.bc) css.push(`--bc:${isHex(a.bc) ? a.bc : `var(--c-${a.bc})`}`);
-      if (a.bu && a.bs) css.push(`--bs:${a.bs}`);
+      const list = a.bu || a.ol;
+      if (list && a.bw) css.push(`--bw:${a.bw}em`);
+      if (list && a.bc) css.push(`--bc:${isHex(a.bc) ? a.bc : `var(--c-${a.bc})`}`);
+      if (list && a.bs) css.push(`--bs:${a.bs}`);
       return css.join(';');
     };
-    const bullet = (i) => { const b = lineAttrs(i).bu; return b && B.isBullet(b) ? ` data-bu="${esc(b)}"` : ''; };
+    const bullet = (i) => {
+      const a = lineAttrs(i);
+      let out = '';
+      if (a.ol && B.isOlFormat(a.ol)) out += ` data-ol="${esc(a.ol)}"`;
+      else if (a.bu && B.isBullet(a.bu)) out += ` data-bu="${esc(a.bu)}"`;
+      if (a.lv != null && (a.ol || a.bu || a.pl)) out += ` data-lv="${a.lv}"`;
+      return out;
+    };
     if (lines.some((l, i) => lineStyle(i) || bullet(i))) {
       return lines.map((l, i) => {
         const st = lineStyle(i);
@@ -413,7 +432,7 @@
     return out;
   }
 
-  const LINE_KEYS = ['pl', 'ti', 'mt', 'ta', 'bu', 'bw', 'bc', 'bs'];
+  const LINE_KEYS = ['pl', 'ti', 'mt', 'ta', 'bu', 'bw', 'bc', 'bs', 'ol', 'lv'];
   function lineAttrsOf(flat, ln) {
     if (ln.end > ln.start) return flat[ln.start].a;
     return ln.nl >= 0 ? flat[ln.nl].a : NONE;
@@ -455,7 +474,7 @@
         case 's': document.execCommand(value === 'sub' ? 'subscript' : 'superscript'); break;
         case 'c': document.execCommand('foreColor', false, COLOR_SENT[value] || COLOR_SENT.default); break;
         case 'h': document.execCommand('hiliteColor', false, HL_SENT[cur.h === value ? 'none' : value]); break;
-        case 'x': document.execCommand('fontName', false, cur.x ? BOX_OFF : BOX_ON); break;
+        case 'x': document.execCommand('fontName', false, cur.x ? BOX_OFF : value === true || !SEM_ALL.test(value) ? BOX_ON : BOX_ON + '-' + value); break;
       }
     },
   };

@@ -99,13 +99,18 @@
       const ppr = [];
       const attrs = [];
       if (la.pl) attrs.push(`marL="${em(la.pl)}"`);
+      if (la.lv) attrs.push(`lvl="${la.lv}"`);
       if (la.ti) attrs.push(`indent="${em(la.ti)}"`);
       const al = la.ta || opts.align;
-      if (al) attrs.push(`algn="${al === 'center' ? 'ctr' : 'r'}"`);
+      if (al) attrs.push(`algn="${al === 'center' ? 'ctr' : al === 'right' ? 'r' : 'l'}"`);
       ppr.push(`<a:lnSpc><a:spcPct val="${Math.round((defLh / 1.2) * 100000)}"/></a:lnSpc>`);
       if (la.mt) ppr.push(`<a:spcBef><a:spcPts val="${Math.round(la.mt * fs / 2 * 100)}"/></a:spcBef>`);
       let prefix = '';
-      if (la.bu && la.bu.length === 1) {
+      const AUTO = { '1.': 'arabicPeriod', '1)': 'arabicParenR', '(1)': 'arabicParenBoth', 'i.': 'romanLcPeriod', 'i)': 'romanLcParenR', 'I.': 'romanUcPeriod', 'a.': 'alphaLcPeriod', 'a)': 'alphaLcParenR', 'A.': 'alphaUcPeriod', 'A)': 'alphaUcParenR' };
+      if (la.ol && AUTO[la.ol]) {
+        if (la.bc) ppr.push(`<a:buClr><a:srgbClr val="${ctx.color(la.bc).hex}"/></a:buClr>`);
+        ppr.push(`<a:buFont typeface="+mj-lt"/><a:buAutoNum type="${AUTO[la.ol]}"/>`);
+      } else if (la.bu && la.bu.length === 1) {
         if (la.bc) ppr.push(`<a:buClr><a:srgbClr val="${ctx.color(la.bc).hex}"/></a:buClr>`);
         if (la.bs) ppr.push(`<a:buSzPct val="${Math.round(la.bs * 100000)}"/>`);
         ppr.push(`<a:buFont typeface="Arial"/><a:buChar char="${xml(la.bu)}"/>`);
