@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>デジタル板書 インストールと使い始め</title>
+<style>
+  @page { size: A4; margin: 14mm 16mm 12mm; }
+  body { font-family: "Yu Gothic UI", "Yu Gothic", "Meiryo", sans-serif; font-size: 10pt; line-height: 1.6; color: #222; }
+  h1 { font-size: 18pt; margin: 0 0 2mm; }
+  .sub { color: #666; margin: 0 0 6mm; }
+  h2 { font-size: 12.5pt; border-left: 4px solid #2f6db5; padding-left: 3mm; margin: 5mm 0 2mm; break-after: avoid; }
+  ol, ul { margin: 1mm 0 2mm; padding-left: 6mm; }
+  li { margin: 0.8mm 0; }
+  b.ui { background: #eef2f8; border: 1px solid #c9d4e5; border-radius: 3px; padding: 0 1.5mm; font-weight: 600; }
+  .note { background: #fff7e0; border: 1px solid #ecd28a; border-radius: 4px; padding: 2mm 3mm; margin: 2mm 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1mm 0 2mm; }
+  td { border: 1px solid #ccc; padding: 1.2mm 2.5mm; vertical-align: top; }
+  td:first-child { width: 32%; background: #f6f7f9; }
+  section { break-inside: avoid; }
+</style>
+</head>
+<body>
+<h1>デジタル板書　インストールと使い始め</h1>
+<p class="sub">Windows 10 / 11（64 ビット）用。管理者権限は要りません。インターネットにつながっていなくても使えます。</p>
+
+<section>
+<h2>1. インストール</h2>
+<ol>
+  <li>受け取った <b>Bansho-Setup-<i>（版）</i>.exe</b> をダブルクリックします。<br>
+      ZIP で受け取った場合は、先に右クリック →<b class="ui">すべて展開</b>で取り出してから実行してください。</li>
+  <li>青い画面「<b>Windows によって PC が保護されました</b>」が出たら、<b class="ui">詳細情報</b>を押し、現れた<b class="ui">実行</b>を押します。<br>
+      （配布元の電子署名がないために出る確認です。）</li>
+  <li><b class="ui">次へ</b>→<b class="ui">インストール</b>→<b class="ui">完了</b>と進みます。</li>
+</ol>
+<div class="note">
+  ブラウザーでダウンロードしたときに「一般的にダウンロードされていません」などと出た場合は、<b class="ui">…</b>（その他）→<b class="ui">保存</b>→<b class="ui">保持する</b>を選んでください。<br>
+  「WebView2 ランタイムが入っていない」というメッセージが出た場合は、案内に従って Microsoft のページから入れてください（Windows 11 では通常出ません）。
+</div>
+</section>
+
+<section>
+<h2>2. 起動とファイルの開き方</h2>
+<table>
+  <tr><td>起動する</td><td>スタートメニューの<b class="ui">デジタル板書</b>（入れるときに選べば、デスクトップにもアイコンができます）</td></tr>
+  <tr><td>板書ファイル（.board）</td><td>ダブルクリックで開きます。<br>最初の 1 回だけ「このファイルを開く方法を選んでください」と出ることがあります。そのときは<b class="ui">デジタル板書</b>を選び、<b class="ui">常に使う</b>を押してください。</td></tr>
+  <tr><td>PowerPoint（.pptx）</td><td>右クリック →<b class="ui">送る</b>→<b class="ui">デジタル板書</b>。または板書の<b class="ui">開く</b>（Ctrl+O）から選びます。<br>Windows 11 では「送る」は右クリック →<b class="ui">その他のオプションを確認</b>の中にあります。</td></tr>
+</table>
+</section>
+
+<section>
+<h2>3. 授業で使う</h2>
+<ul>
+  <li><b>プロジェクターに映す：</b>プロジェクターをつないで <b>Windows キー + P</b> →<b class="ui">拡張</b>にしてから、<b class="ui">提示画面を開く</b>（F5）を押すと、プロジェクター側に全画面で表示されます。手元の画面で書いた内容がそのまま映ります。</li>
+  <li><b>PDF にする：</b><b class="ui">PDF出力・印刷</b>（Ctrl+P）を押すと、保存先を聞かれ、1 ページずつの PDF がそのまま保存されます（プリンターを選ぶ必要はありません）。</li>
+  <li><b>保存：</b><b class="ui">上書き保存</b>（Ctrl+S）。保存せずに閉じようとすると確認が出ます。</li>
+</ul>
+</section>
+
+<section>
+<h2>4. 新しい版への更新・アンインストール</h2>
+<ul>
+  <li><b>更新：</b>新しいインストーラーをそのまま実行してください（上書きされます）。作ったファイルや設定はそのまま残ります。</li>
+  <li><b>アンインストール：</b>Windows の<b class="ui">設定</b>→<b class="ui">アプリ</b>→<b class="ui">インストールされているアプリ</b>→<b class="ui">デジタル板書</b>→<b class="ui">アンインストール</b>。作った .board ファイルは消えません。</li>
+</ul>
+</section>
+</body>
+</html>

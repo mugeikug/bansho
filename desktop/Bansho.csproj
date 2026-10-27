@@ -12,6 +12,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <Version>1.0.0</Version>
     <Product>デジタル板書</Product>
+    <AssemblyTitle>デジタル板書</AssemblyTitle>
     <Company>maezhir</Company>
     <Copyright>maezhir</Copyright>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
