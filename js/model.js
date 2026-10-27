@@ -17,6 +17,14 @@ window.B = window.B || {};
   B.colorCss = (c, kind) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : `var(--${kind || 'c'}-${c || 'default'})`);
   const COLOR_OK = /^(default|red|blue|green|gray|yellow|pink|#[0-9a-f]{6})$/i;
   B.THEMES = ['white', 'board', 'black'];
+  // 表の罫線の種類（セルの辺ごと：bt / bb / bl / br。省略時は細線）と、線の太さ（基準の太さ bw に対して）
+  B.BORDER_STYLES = ['thin', 'thick', 'double', 'none'];
+  B.borderCss = (style, bw) => {
+    if (style === 'none') return 'none';
+    if (style === 'thick') return `${Math.max(bw * 2.5, 5)}px solid var(--tb)`;
+    if (style === 'double') return `${Math.max(bw * 3, 6)}px double var(--tb)`;
+    return `${bw}px solid var(--tb)`;
+  };
   B.THEME_LABELS = { white: '白地', board: '黒板（緑）', black: '黒板（黒）' };
 
   class Store {
@@ -347,6 +355,7 @@ window.B = window.B || {};
         if (/^#[0-9a-f]{6}$/i.test(cell.fill || '')) out.fill = cell.fill;
         if (cell.al === 'center' || cell.al === 'right') out.al = cell.al;
         if (cell.va === 'middle' || cell.va === 'bottom') out.va = cell.va;
+        for (const k of ['bt', 'bb', 'bl', 'br']) if (B.BORDER_STYLES.includes(cell[k]) && cell[k] !== 'thin') out[k] = cell[k];
         return out;
       }));
       if (o.color != null && !COLOR_OK.test(o.color)) o.color = 'default';

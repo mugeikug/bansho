@@ -677,7 +677,7 @@
       this.history.begin(page);
       // 確定済みのオブジェクトは書き換えない：複製に差し替えてから編集する
       this.store.replaceObject(page, B.cloneObj(obj), { source: 'editor' });
-      this.ts = { id: obj.id, pageId: page.id, content, cell: obj.type === 'table' ? this.cellOf(content) : null, stack: [], idx: -1, timer: 0 };
+      this.ts = { id: obj.id, pageId: page.id, orig: obj, content, cell: obj.type === 'table' ? this.cellOf(content) : null, stack: [], idx: -1, timer: 0 };
       this.pushSnap();
       this.editingId = obj.id;
       if (this.onEditingChange) this.onEditingChange();
@@ -715,6 +715,11 @@
             this.store.updateObject(page, obj, { source: 'editor' });
           }
         }
+      }
+      // 何も変えずに編集を終えたときは、編集用の複製を元のオブジェクトに戻す（空の「元に戻す」を作らない）
+      if (page && ts.orig) {
+        const i = page.objects.findIndex((o) => o.id === ts.id);
+        if (i >= 0 && JSON.stringify(B.cloneObj(page.objects[i])) === JSON.stringify(B.cloneObj(ts.orig))) page.objects[i] = ts.orig;
       }
       this.history.commit();
       this.editingId = null;
@@ -767,6 +772,13 @@
       if (!ts) return;
       clearTimeout(ts.timer);
       ts.timer = setTimeout(() => this.pushSnap(), 600);
+    }
+
+    textCanUndo() {
+      const ts = this.ts;
+      if (!ts) return false;
+      if (ts.timer) this.pushSnap();
+      return ts.idx > 0;
     }
 
     textUndo() {
@@ -1206,6 +1218,53 @@
       else this.store.replaceObject(page, t, { structure: true });
       this.history.commit();
       if (op !== 'delete') this.focusCell(id, r, c);
+    }
+
+    // 罫線：scope（'cell' | 'row' | 'col' | 'table'）の範囲の edges（'top' 'bottom' 'left' 'right' 'outer' 'inner' 'all'）を style にする。
+    // 隣のセルと共有する辺は、両方のセルに同じ値を入れる（重なった線の見た目を揃えるため）
+    tableBorder(scope, edges, style) {
+      const ts = this.ts;
+      const obj = this.editingObj();
+      if (!ts || !obj || !ts.cell) return;
+      const [r, c] = ts.cell;
+      const id = obj.id;
+      const page = this.store.page;
+      this.endEditing();
+      const cur = this.store.findObject(page, id);
+      if (!cur) return;
+      const t = B.cloneObj(cur);
+      const R = t.rows.length, C = t.cols.length;
+      const [r0, r1] = scope === 'row' || scope === 'cell' ? [r, r] : [0, R - 1];
+      const [c0, c1] = scope === 'col' || scope === 'cell' ? [c, c] : [0, C - 1];
+      const v = style === 'thin' ? null : style;
+      const put = (rr, cc, side) => {
+        if (rr < 0 || cc < 0 || rr >= R || cc >= C) return;
+        const cell = t.cells[rr][cc];
+        if (v) cell[side] = v; else delete cell[side];
+      };
+      const edge = (rr, cc, side) => {
+        put(rr, cc, side);
+        if (side === 'bt') put(rr - 1, cc, 'bb');
+        if (side === 'bb') put(rr + 1, cc, 'bt');
+        if (side === 'bl') put(rr, cc - 1, 'br');
+        if (side === 'br') put(rr, cc + 1, 'bl');
+      };
+      const outer = edges === 'outer' || edges === 'all';
+      const inner = edges === 'inner' || edges === 'all';
+      for (let rr = r0; rr <= r1; rr++) {
+        for (let cc = c0; cc <= c1; cc++) {
+          if ((edges === 'top' || outer) && rr === r0) edge(rr, cc, 'bt');
+          if ((edges === 'bottom' || outer) && rr === r1) edge(rr, cc, 'bb');
+          if ((edges === 'left' || outer) && cc === c0) edge(rr, cc, 'bl');
+          if ((edges === 'right' || outer) && cc === c1) edge(rr, cc, 'br');
+          if (inner && rr < r1) edge(rr, cc, 'bb');
+          if (inner && cc < c1) edge(rr, cc, 'br');
+        }
+      }
+      this.history.begin(page);
+      this.store.replaceObject(page, t, { structure: true });
+      this.history.commit();
+      this.focusCell(id, r, c);
     }
 
     // 列の境目のつまみで幅を変える

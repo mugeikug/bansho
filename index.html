@@ -141,6 +141,11 @@
   <button data-op="rowDelete">この行を削除</button>
   <button data-op="colDelete">この列を削除</button>
   <button data-op="delete">表全体を削除</button>
+  <hr>
+  <div class="mtitle">罫線（範囲 → 辺 → 線の種類 の順に選ぶ）</div>
+  <div class="row bd-scope"><button data-bscope="cell" class="on">このセル</button><button data-bscope="row">この行</button><button data-bscope="col">この列</button><button data-bscope="table">表全体</button></div>
+  <div class="row bd-edges"><button data-bedge="all" class="on">すべて</button><button data-bedge="outer">外枠</button><button data-bedge="inner">内側</button><button data-bedge="top">上</button><button data-bedge="bottom">下</button><button data-bedge="left">左</button><button data-bedge="right">右</button></div>
+  <div class="row bd-style"><button data-bstyle="thin">細線</button><button data-bstyle="thick">太線</button><button data-bstyle="double">二重線</button><button data-bstyle="none">線なし</button></div>
 </div>
 <input type="file" id="image-file" accept="image/*" multiple hidden>
 <div id="drop-hint" hidden>ここに画像・.board・.pptx ファイルをドロップ</div>

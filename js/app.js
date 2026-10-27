@@ -194,6 +194,19 @@
   })();
 
   $('#table-ops').addEventListener('click', (e) => {
+    // 罫線：範囲・辺の選択はメニューを開いたまま、線の種類を押したら適用
+    const sc = e.target.closest('[data-bscope], [data-bedge]');
+    if (sc) {
+      const attr = sc.dataset.bscope ? 'data-bscope' : 'data-bedge';
+      for (const x of sc.parentElement.querySelectorAll(`[${attr}]`)) x.classList.toggle('on', x === sc);
+      return;
+    }
+    const st = e.target.closest('[data-bstyle]');
+    if (st) {
+      $('#table-ops').hidden = true;
+      editor.tableBorder($('#table-ops [data-bscope].on').dataset.bscope, $('#table-ops [data-bedge].on').dataset.bedge, st.dataset.bstyle);
+      return;
+    }
     const b = e.target.closest('[data-op]');
     if (!b) return;
     $('#table-ops').hidden = true;
@@ -524,8 +537,9 @@
 
   function undo() {
     if (editor.active) return;
-    if (editor.ts) editor.textUndo();
-    else history.undo();
+    // 文字入力中は文字単位で戻す。文字の変更がなければ（罫線や行の追加の直後など）直前の操作を戻す
+    if (editor.ts && editor.textCanUndo()) editor.textUndo();
+    else { editor.endEditing(); history.undo(); }
     updateFormatState();
   }
 

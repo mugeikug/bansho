@@ -1131,6 +1131,14 @@
             const t = makeText(tb, ctx, { x: 0, y: 0, w, h: rows[ri] }, kid(tb, 'lstStyle'), null, [], { bold: firstRow && ri === 0, noBullets: true });
             if (t) { texts.push([cell, t]); if (t.align) cell.al = t.align; }
           }
+          // 罫線（辺ごと）：線なし・二重線・太線（基準の 2 倍以上）を読み取る（基準の太さは後で決める）
+          cell._ln = {};
+          for (const [n, k] of [['lnT', 'bt'], ['lnB', 'bb'], ['lnL', 'bl'], ['lnR', 'br']]) {
+            const l = kid(tcPr, n);
+            if (!l) continue;
+            if (kid(l, 'noFill')) cell._ln[k] = 'none';
+            else cell._ln[k] = { w: num(l.getAttribute('w'), 12700) * ctx.s, dbl: /dbl|thickThin|thinThick/.test(l.getAttribute('cmpd') || '') };
+          }
           const anchor = tcPr && tcPr.getAttribute('anchor');
           if (anchor === 'ctr') cell.va = 'middle';
           else if (anchor === 'b') cell.va = 'bottom';
@@ -1140,14 +1148,14 @@
             if (col) cell.fill = '#' + col.hex.toLowerCase();
           }
         }
-        if (!border) {
-          for (const n of ['lnB', 'lnT', 'lnL', 'lnR']) {
-            const ln = kid(tcPr, n);
-            if (ln && !kid(ln, 'noFill')) {
-              const col = readColor(kid(ln, 'solidFill'), ctx);
-              border = { color: col ? ctx.colorOf(col) : null, w: Math.max(1, num(ln.getAttribute('w'), 12700) * ctx.s) };
-              break;
-            }
+        // 表の基準の罫線：一重線のうち最も細いもの（その太さ・色）
+        for (const n of ['lnB', 'lnT', 'lnL', 'lnR']) {
+          const ln = kid(tcPr, n);
+          if (!ln || kid(ln, 'noFill') || /dbl|thickThin|thinThick/.test(ln.getAttribute('cmpd') || '')) continue;
+          const w = Math.max(1, num(ln.getAttribute('w'), 12700) * ctx.s);
+          if (!border || w < border.w) {
+            const col = readColor(kid(ln, 'solidFill'), ctx);
+            border = { color: col ? ctx.colorOf(col) : null, w };
           }
         }
         ci += span;
@@ -1172,6 +1180,16 @@
     if (texts.length && texts.filter(([, t]) => t.font === 'ja').length * 2 >= texts.length) obj.font = 'ja';
     obj.color = (border && border.color) || (ctx.keep ? '#808080' : 'default');
     obj.bw = Math.round(((border && border.w) || 2) * 10) / 10;
+    for (const row of cells) {
+      for (const cell of row) {
+        for (const [k, v] of Object.entries(cell._ln || {})) {
+          if (v === 'none') cell[k] = 'none';
+          else if (v.dbl) cell[k] = 'double';
+          else if (v.w >= obj.bw * 2) cell[k] = 'thick';
+        }
+        delete cell._ln;
+      }
+    }
     out.push(obj);
   }
 

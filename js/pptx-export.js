@@ -218,7 +218,12 @@
   function tableObj(o, id, ctx) {
     const border = ctx.color(o.color || 'default');
     const bw = e(o.bw || 2);
-    const ln = (n) => `<a:${n} w="${bw}" cap="flat" cmpd="sng" algn="ctr">${colorEl(border.hex)}<a:prstDash val="solid"/><a:round/></a:${n}>`;
+    const base = o.bw || 2;
+    const ln = (n, style) => {
+      if (style === 'none') return `<a:${n} w="12700"><a:noFill/></a:${n}>`;
+      const w = style === 'thick' ? e(Math.max(base * 2.5, 5)) : style === 'double' ? e(Math.max(base * 3, 6)) : bw;
+      return `<a:${n} w="${w}" cap="flat" cmpd="${style === 'double' ? 'dbl' : 'sng'}" algn="ctr">${colorEl(border.hex)}<a:prstDash val="solid"/><a:round/></a:${n}>`;
+    };
     const total = o.cols.reduce((a, b) => a + b, 0);
     const m = ctx.measureEl(o);
     let rows = '';
@@ -227,7 +232,7 @@
       row.forEach((cell) => {
         const body = paragraphs(cell.html || '', o.fs, ctx, { lh: o.lh, align: cell.al, font: o.font }) || '<a:p><a:endParaRPr lang="ja-JP"/></a:p>';
         const anchor = cell.va === 'middle' ? ' anchor="ctr"' : cell.va === 'bottom' ? ' anchor="b"' : '';
-        rows += `<a:tc><a:txBody><a:bodyPr/><a:lstStyle/>${body}</a:txBody><a:tcPr marL="${e(12)}" marR="${e(12)}" marT="${e(6)}" marB="${e(6)}"${anchor}>${ln('lnL')}${ln('lnR')}${ln('lnT')}${ln('lnB')}${cell.fill ? colorEl(ctx.color(cell.fill).hex) : '<a:noFill/>'}</a:tcPr></a:tc>`;
+        rows += `<a:tc><a:txBody><a:bodyPr/><a:lstStyle/>${body}</a:txBody><a:tcPr marL="${e(12)}" marR="${e(12)}" marT="${e(6)}" marB="${e(6)}"${anchor}>${ln('lnL', cell.bl)}${ln('lnR', cell.br)}${ln('lnT', cell.bt)}${ln('lnB', cell.bb)}${cell.fill ? colorEl(ctx.color(cell.fill).hex) : '<a:noFill/>'}</a:tcPr></a:tc>`;
       });
       rows += '</a:tr>';
     });

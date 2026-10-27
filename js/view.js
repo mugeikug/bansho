@@ -182,6 +182,11 @@
           if (cell.fill) td.style.backgroundColor = B.colorCss(cell.fill, 'c');
           if (cell.al) td.style.textAlign = cell.al;
           if (cell.va) td.style.verticalAlign = cell.va;
+          const bw = obj.bw || 2;
+          if (cell.bt) td.style.borderTop = B.borderCss(cell.bt, bw);
+          if (cell.bb) td.style.borderBottom = B.borderCss(cell.bb, bw);
+          if (cell.bl) td.style.borderLeft = B.borderCss(cell.bl, bw);
+          if (cell.br) td.style.borderRight = B.borderCss(cell.br, bw);
           const content = d.createElement('div');
           content.className = 'content';
           content.innerHTML = cell.html;
