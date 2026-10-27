@@ -13,6 +13,7 @@
 // 行の書式（各文字に持たせ、行の先頭の文字の値を使う。KEYS には含めない）
 //   pl: 左の余白（em）  ti: 1 行目の字下げ（em、負ならぶら下げ）  mt: 段落の前の間隔（em）  ta: 'center' | 'right'
 //   ol: 番号付きリストの形式（'1.' '1)' '(1)' 'i.' 'i)' 'I.' 'a.' 'a)' 'A.' 'A)'。番号は CSS のカウンターで自動）
+//   os: 番号の開始番号（この行の番号。2 以上のときだけ）
 //   lv: 箇条書き・番号の段（0〜4。番号の数え直しに使う）
 //   bu: 箇条書きの記号（文字列）  bw: 記号の幅（em）  bc: 記号の色（意味上の色名か '#rrggbb'）  bs: 記号の大きさ（倍率）
 //   空の行の書式は、その行の前の改行文字に持たせる（行頭の文字がないため）
@@ -165,6 +166,8 @@
         if (st.paddingLeft) a = set(a, 'pl', em(st.paddingLeft));
         if (st.textIndent) a = set(a, 'ti', em(st.textIndent));
         if (st.marginTop) a = set(a, 'mt', em(st.marginTop));
+        const cs = /^ol[0-4]\s+(-?\d+)$/.exec((st.counterSet || '').trim());
+        if (cs) a = set(a, 'os', Number(cs[1]));
         if (st.textAlign === 'center' || st.textAlign === 'right' || st.textAlign === 'left') a = set(a, 'ta', st.textAlign);
         else if (st.textAlign) a = set(a, 'ta', null);
         const bw = em(st.getPropertyValue('--bw').trim());
@@ -316,6 +319,7 @@
       if (a.pl) css.push(`padding-left:${a.pl}em`);
       if (a.ti) css.push(`text-indent:${a.ti}em`);
       if (a.mt) css.push(`margin-top:${a.mt}em`);
+      if (a.ol && a.os > 1 && a.lv != null) css.push(`counter-set:ol${a.lv} ${a.os}`);
       if (a.ta) css.push(`text-align:${a.ta}`);
       const list = a.bu || a.ol;
       if (list && a.bw) css.push(`--bw:${a.bw}em`);
@@ -432,7 +436,7 @@
     return out;
   }
 
-  const LINE_KEYS = ['pl', 'ti', 'mt', 'ta', 'bu', 'bw', 'bc', 'bs', 'ol', 'lv'];
+  const LINE_KEYS = ['pl', 'ti', 'mt', 'ta', 'bu', 'bw', 'bc', 'bs', 'ol', 'lv', 'os'];
   function lineAttrsOf(flat, ln) {
     if (ln.end > ln.start) return flat[ln.start].a;
     return ln.nl >= 0 ? flat[ln.nl].a : NONE;

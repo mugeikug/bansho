@@ -328,7 +328,7 @@
   document.addEventListener('click', (e) => {
     const d = e.target.closest('[data-menu]');
     if (d) { openPopup($('#' + d.dataset.menu), d); return; }
-    const pick = e.target.closest('[data-ul], [data-box], [data-marker], [data-ol], [data-align]');
+    const pick = e.target.closest('[data-ul], [data-box], [data-marker], [data-ol], [data-align], [data-space], [data-olstart]');
     if (!pick || !pick.closest('.popup')) return;
     pick.closest('.popup').hidden = true;
     if (pick.dataset.ul != null) {
@@ -347,6 +347,17 @@
     } else if (pick.dataset.align) {
       editor.alignLines(pick.dataset.align);
       updateFormatState();
+    } else if (pick.dataset.space != null) {
+      const v = Number(pick.dataset.space);
+      editor.setLineAttrs({ mt: v || null });
+    } else if (pick.dataset.olstart) {
+      const ls = editor.lineState();
+      if (!ls || !ls.ol) { toast('番号付きリストの行で選んでください'); return; }
+      if (editor.ts) editor.rememberRange();
+      const v = prompt('この行から始める番号（1 以上）', String(ls.os || 1));
+      if (editor.ts) editor.restoreRange();
+      const n = Math.floor(Number(v));
+      if (v != null && n >= 1 && n <= 9999) editor.setOlStart(n);
     }
   });
 

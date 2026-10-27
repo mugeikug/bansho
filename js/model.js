@@ -379,7 +379,7 @@ window.B = window.B || {};
   const STYLE_RULES = {
     SPAN: { 'font-size': NUM_EM, color: HEX, 'font-family': /^'[^'"<>;\\{}()]{1,80}'$/ },
     U: { 'text-decoration-color': HEX },
-    DIV: { 'padding-left': NUM_EM, 'text-indent': NUM_EM, 'margin-top': NUM_EM, 'text-align': /^(left|center|right)$/, '--bw': NUM_EM, '--bs': /^\d+(\.\d+)?$/, '--bc': /^(#[0-9a-f]{6}|var\(--c-(default|red|blue|green|gray)\))$/i },
+    DIV: { 'padding-left': NUM_EM, 'text-indent': NUM_EM, 'margin-top': NUM_EM, 'counter-set': /^ol[0-4] \d{1,4}$/, 'text-align': /^(left|center|right)$/, '--bw': NUM_EM, '--bs': /^\d+(\.\d+)?$/, '--bc': /^(#[0-9a-f]{6}|var\(--c-(default|red|blue|green|gray)\))$/i },
   };
   function cleanStyle(tag, value) {
     const rules = STYLE_RULES[tag];

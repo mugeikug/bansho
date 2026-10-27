@@ -667,7 +667,11 @@
             counters[lvl] = (counters[lvl] || bu.start - 1) + 1;
             text = autoNum(bu.auto, counters[lvl]);
             // 板書の番号付きリストで表せる形式なら、番号を自動で振る形にする（1 から始まるもののみ）
-            if (OL[bu.auto] && bu.start === 1 && lvl <= 4) ln.ol = OL[bu.auto];
+            if (OL[bu.auto] && lvl <= 4) {
+              ln.ol = OL[bu.auto];
+              // 開始番号：段落の連続の最初の行だけに付ける
+              if (bu.start > 1 && counters[lvl] === bu.start) ln.os = bu.start;
+            }
           } else {
             const font = P((e) => { const bf = kid(e, 'buFont'); return bf ? bf.getAttribute('typeface') : undefined; });
             text = bulletChar(bu.ch, font);
@@ -788,7 +792,7 @@
         if (c.ln.mt > 0.5) extra.mt = em(c.ln.mt);
         if (c.ln.bu || (c.ln.pl && c.ln.lv)) extra.lv = c.ln.lv;
         if (c.ln.bu) {
-          if (c.ln.ol) extra.ol = c.ln.ol;
+          if (c.ln.ol) { extra.ol = c.ln.ol; if (c.ln.os) extra.os = c.ln.os; }
           else extra.bu = c.ln.bu;
           extra.bw = em(c.ln.bw);
           if (c.ln.bc) extra.bc = c.ln.bc;

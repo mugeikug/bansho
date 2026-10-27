@@ -81,7 +81,7 @@
       <span class="split"><button data-cmd="numbering" id="btn-numbering" class="icon" title="番号付きリスト（▾で形式を選ぶ）"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><text x="1" y="7.5" font-size="6.5" font-family="Segoe UI" fill="currentColor">1.</text><text x="1" y="16" font-size="6.5" font-family="Segoe UI" fill="currentColor">2.</text><path d="M8 5h9M8 13.5h9" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button><button class="drop" data-menu="ol-menu" title="番号の形式">▾</button></span>
       <button data-cmd="outdent" class="icon" title="字下げを浅く (Shift+Tab)"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4h9M8 8h9M8 12h9M3 16h14M6 6.5L3 9l3 2.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
       <button data-cmd="indent" class="icon" title="字下げを深く (行頭で Tab)"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4h9M8 8h9M8 12h9M3 16h14M3 6.5L6 9l-3 2.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
-      <button id="btn-align" class="icon drop-solo" data-menu="align-menu" title="行の揃え（左・中央・右）"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M3 8h9M3 12h14M3 16h9" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
+      <button id="btn-align" class="icon drop-solo" data-menu="align-menu" title="段落：行の揃え・段落の前の間隔・番号の開始番号"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M3 8h9M3 12h14M3 16h9" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
       <button data-cmd="tableops" id="btn-tableops" title="表の行・列の追加と削除" hidden>表 ▾</button>
       <span class="sep"></span>
       <span id="text-colors"></span>
@@ -125,6 +125,11 @@
   <button data-align="left"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M3 8h9M3 12h14M3 16h9" stroke="currentColor" stroke-width="1.6" fill="none"/></svg> 左揃え</button>
   <button data-align="center"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M5.5 8h9M3 12h14M5.5 16h9" stroke="currentColor" stroke-width="1.6" fill="none"/></svg> 中央揃え</button>
   <button data-align="right"><svg class="ico-svg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14M8 8h9M3 12h14M8 16h9" stroke="currentColor" stroke-width="1.6" fill="none"/></svg> 右揃え</button>
+  <hr>
+  <div class="mtitle">段落の前の間隔</div>
+  <div class="row"><button data-space="0">なし</button><button data-space="0.3">小</button><button data-space="0.6">中</button><button data-space="1.2">大</button></div>
+  <hr>
+  <button data-olstart="1">番号の開始番号…</button>
 </div>
 <div id="table-picker" class="popup" hidden><div id="table-grid"></div><div id="table-size">表の大きさを選ぶ</div></div>
 <div id="table-ops" class="popup" hidden>

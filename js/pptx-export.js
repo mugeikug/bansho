@@ -109,7 +109,7 @@
       const AUTO = { '1.': 'arabicPeriod', '1)': 'arabicParenR', '(1)': 'arabicParenBoth', 'i.': 'romanLcPeriod', 'i)': 'romanLcParenR', 'I.': 'romanUcPeriod', 'a.': 'alphaLcPeriod', 'a)': 'alphaLcParenR', 'A.': 'alphaUcPeriod', 'A)': 'alphaUcParenR' };
       if (la.ol && AUTO[la.ol]) {
         if (la.bc) ppr.push(`<a:buClr><a:srgbClr val="${ctx.color(la.bc).hex}"/></a:buClr>`);
-        ppr.push(`<a:buFont typeface="+mj-lt"/><a:buAutoNum type="${AUTO[la.ol]}"/>`);
+        ppr.push(`<a:buFont typeface="+mj-lt"/><a:buAutoNum type="${AUTO[la.ol]}"${la.os > 1 ? ` startAt="${la.os}"` : ''}/>`);
       } else if (la.bu && la.bu.length === 1) {
         if (la.bc) ppr.push(`<a:buClr><a:srgbClr val="${ctx.color(la.bc).hex}"/></a:buClr>`);
         if (la.bs) ppr.push(`<a:buSzPct val="${Math.round(la.bs * 100000)}"/>`);

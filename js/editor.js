@@ -956,6 +956,22 @@
       return this.formatSelectedLines(() => ({ ta }));
     }
 
+    // 行の書式（段落の前の間隔など）を、文字入力中は選んだ行に、選択ツールではボックス全体に
+    setLineAttrs(attrs) {
+      if (this.ts) return this.changeLines(() => attrs);
+      return this.formatSelectedLines(() => attrs);
+    }
+
+    // 番号付きリストの開始番号：選んだ範囲の最初の番号付きの行に設定する
+    setOlStart(n) {
+      let done = false;
+      return this.changeLines((a) => {
+        if (done || !a.ol) return null;
+        done = true;
+        return { os: n === 1 ? null : n };
+      });
+    }
+
     // 選択中のテキストボックス・表のすべての行に行の書式を適用する
     formatSelectedLines(fn) {
       const conv = (html) => {
