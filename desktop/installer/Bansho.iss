@@ -28,7 +28,8 @@ DisableDirPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-MinVersion=10.0
+; .NET Framework 4.8 が最初から入っている Windows 10 1903 以降
+MinVersion=10.0.18362
 OutputBaseFilename=Bansho-Setup-{#AppVersion}
 SetupIconFile=..\bansho.ico
 UninstallDisplayIcon={app}\{#AppExe}
@@ -52,6 +53,8 @@ Type: filesandordirs; Name: "{app}\app"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
+; WebView2 ランタイムがないときだけ取り出して実行する（tools/build-desktop.js が Microsoft から取得）
+Source: "MicrosoftEdgeWebview2Setup.exe"; Flags: dontcopy
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
@@ -88,13 +91,29 @@ begin
     (RegQueryStringValue(HKCU, 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'pv', v) and (v <> '') and (v <> '0.0.0.0'));
 end;
 
+// .NET Framework 4.8 以降（Release 528040 以上）
+function InitializeSetup: Boolean;
+var
+  r: Cardinal;
+begin
+  Result := RegQueryDWordValue(HKLM, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full', 'Release', r) and (r >= 528040);
+  if not Result then
+    SuppressibleMsgBox('このパソコンには .NET Framework 4.8 が入っていないため、インストールできません。' + #13#10 +
+      'Windows Update で Windows を最新の状態にしてから、もう一度実行してください。', mbCriticalError, MB_OK, IDOK);
+end;
+
+// WebView2 ランタイムがなければ、同梱のセットアップで入れる（インターネット接続が要る）
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   code: Integer;
 begin
-  if (CurStep = ssPostInstall) and not WizardSilent and not HasWebView2 then
-    if MsgBox('このパソコンには、板書の画面を表示するための「Microsoft Edge WebView2 ランタイム」が入っていないようです。' + #13#10#13#10 +
-              'ダウンロードのページを開きますか？（「Evergreen ブートストラッパー」をダウンロードして実行してください）',
-              mbConfirmation, MB_YESNO) = IDYES then
-      ShellExec('open', 'https://developer.microsoft.com/microsoft-edge/webview2/', '', '', SW_SHOWNORMAL, ewNoWait, code);
+  if (CurStep = ssPostInstall) and not HasWebView2 then
+  begin
+    WizardForm.StatusLabel.Caption := '画面表示用の WebView2 ランタイムをインストールしています…';
+    ExtractTemporaryFile('MicrosoftEdgeWebview2Setup.exe');
+    Exec(ExpandConstant('{tmp}\MicrosoftEdgeWebview2Setup.exe'), '/silent /install', '', SW_HIDE, ewWaitUntilTerminated, code);
+    if not HasWebView2 then
+      SuppressibleMsgBox('画面表示用の「Microsoft Edge WebView2 ランタイム」をインストールできませんでした。' + #13#10#13#10 +
+        'インターネットに接続した状態で、このインストーラーをもう一度実行してください。', mbError, MB_OK, IDOK);
+  end;
 end;

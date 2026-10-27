@@ -21,6 +21,15 @@ console.log(`== exe をビルド (v${version})`);
 execFileSync('dotnet', ['build', '-c', 'Release', '--nologo', '-v', 'q'], { cwd: desk, stdio: 'inherit' });
 const src = path.join(desk, 'bin', 'Release', 'net48');
 
+// WebView2 ランタイムの入っていないパソコン用に、Microsoft の配布用セットアップ（ブートストラッパー）を同梱する
+const wv2 = path.join(desk, 'installer', 'MicrosoftEdgeWebview2Setup.exe');
+if (!fs.existsSync(wv2)) {
+  console.log('== WebView2 のセットアップを取得');
+  execFileSync('curl.exe', ['-sSL', '-o', wv2, 'https://go.microsoft.com/fwlink/p/?LinkId=2124703'], { stdio: 'inherit' });
+}
+const sig = execFileSync('powershell', ['-NoProfile', '-Command', `(Get-AuthenticodeSignature '${wv2}').Status.ToString() + ' ' + (Get-AuthenticodeSignature '${wv2}').SignerCertificate.Subject`]).toString().trim();
+if (!/^Valid .*O=Microsoft Corporation/.test(sig)) { console.error('WebView2 のセットアップの署名を確認できません: ' + sig); process.exit(1); }
+
 console.log('== インストーラーを作成');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bansho-setup-'));
 execFileSync(iscc, ['/Q', `/DAppVersion=${version}`, `/DSourceDir=${src}`, `/O${tmp}`, 'Bansho.iss'], { cwd: path.join(desk, 'installer'), stdio: 'inherit' });
