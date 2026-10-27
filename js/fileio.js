@@ -29,6 +29,16 @@
 
     async save(saveAs) {
       const text = B.serialize(this.store.doc);
+      if (B.host) {
+        // デスクトップ版：exe が保存する（上書き保存はパスに直接）
+        const r = await B.host.call('save', { path: this.hostPath || null, name: this.name + EXT, text, saveAs: !!saveAs });
+        if (!r.ok) { if (!r.cancel) alert('保存できませんでした。\n' + (r.error || '')); return false; }
+        this.hostPath = r.path;
+        this.setName(r.name);
+        this.store.setDirty(false);
+        this.toast('保存しました：' + r.name);
+        return true;
+      }
       try {
         if (!saveAs && this.handle) {
           await this.write(this.handle, text);
@@ -68,6 +78,12 @@
 
     // 開く（.board と .pptx）。PowerPoint は読み込み方を選んでから変換する
     async open() {
+      if (B.host) {
+        const r = await B.host.call('open');
+        if (r.ok) await this.openFile(B.host.toFile(r), null);
+        else if (r.error) alert('開けませんでした。\n' + r.error);
+        return;
+      }
       try {
         let file, handle = null;
         if (typeof window.showOpenFilePicker === 'function') {
@@ -99,6 +115,7 @@
       const doc = B.deserialize(await file.text());
       if (this.beforeChange) this.beforeChange();
       this.handle = handle;
+      this.hostPath = file._hostPath || null;
       this.setName(file.name);
       this.store.load(doc);
       this.toast('開きました：' + file.name);
@@ -119,6 +136,7 @@
         if (choice.where === 'new') {
           r.doc.theme = s.doc.theme;
           this.handle = null;
+          this.hostPath = null;
           this.setName(file.name.replace(/\.pptx$/i, ''));
           s.load(r.doc);
           s.setDirty(true); // まだ .board として保存していない
@@ -167,6 +185,14 @@
         document.body.classList.remove('busy');
       }
       const name = this.name + '.pptx';
+      if (B.host) {
+        const h = await B.host.call('saveBytes', { name, b64: await B.host.blobToB64(r.blob) });
+        if (!h.ok) { if (!h.cancel) alert('保存できませんでした。\n' + (h.error || '')); return; }
+        const msg = 'PowerPoint に書き出しました：' + h.name;
+        if (r.warnings.length) alert(msg + '\n\n次の点は PowerPoint では再現できないため、近い形にしました：\n・' + r.warnings.join('\n・'));
+        else this.toast(msg);
+        return;
+      }
       try {
         if (typeof window.showSaveFilePicker === 'function') {
           const h = await window.showSaveFilePicker({ suggestedName: name, types: [{ description: 'PowerPoint プレゼンテーション', accept: { [PPTX_MIME]: ['.pptx'] } }] });
@@ -193,6 +219,7 @@
     newDoc() {
       if (this.store.dirty && !confirm('保存していない変更があります。破棄して新規作成しますか？')) return;
       this.handle = null;
+      this.hostPath = null;
       this.setName('無題');
       this.store.load({ theme: this.store.doc.theme, pages: [B.newPage()] });
     }
@@ -207,7 +234,9 @@
       try { skip = localStorage.getItem('bansho.printGuide.skip') === '1'; } catch (e) { /* noop */ }
       const themed = this.store.doc.theme !== 'white';
       this.printTheme = 'white';
-      if (skip && !themed) { window.print(); return; }
+      if (B.host) skip = true; // デスクトップ版はプリンターを選ばずに PDF を保存するので案内は不要
+      const go = () => (B.host ? this.hostPdf() : window.print());
+      if (skip && !themed) { go(); return; }
       const dlg = document.getElementById('print-guide');
       dlg.querySelector('.theme-choice').hidden = !themed;
       for (const el of dlg.querySelectorAll('.guide')) el.hidden = skip;
@@ -216,19 +245,31 @@
       if (themed) same.parentElement.lastChild.textContent = '画面と同じ（' + B.THEME_LABELS[this.store.doc.theme] + '）';
       const ok = document.getElementById('print-guide-ok');
       const cancel = document.getElementById('print-guide-cancel');
-      const done = (go) => {
+      const done = (ok2) => {
         ok.onclick = cancel.onclick = null;
-        if (go && themed && same.checked) this.printTheme = this.store.doc.theme;
-        if (go && document.getElementById('print-guide-skip').checked) {
+        if (ok2 && themed && same.checked) this.printTheme = this.store.doc.theme;
+        if (ok2 && !B.host && document.getElementById('print-guide-skip').checked) {
           try { localStorage.setItem('bansho.printGuide.skip', '1'); } catch (e) { /* noop */ }
         }
         dlg.close();
-        if (go) setTimeout(() => window.print(), 50);
+        if (ok2) setTimeout(go, 50);
       };
       ok.onclick = () => done(true);
       cancel.onclick = () => done(false);
       dlg.showModal();
       ok.focus();
+    }
+
+    // デスクトップ版の PDF：印刷用のページを組み立て、exe に PDF として保存してもらう
+    async hostPdf() {
+      this.buildPrint();
+      try {
+        const r = await B.host.call('pdf', { name: this.name + '.pdf' });
+        if (r.ok) this.toast('PDF を保存しました：' + r.name);
+        else if (!r.cancel) alert('PDF を保存できませんでした。\n' + (r.error || ''));
+      } finally {
+        this.clearPrint();
+      }
     }
 
     buildPrint() {

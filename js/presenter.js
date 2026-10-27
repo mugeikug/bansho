@@ -25,7 +25,7 @@
       // 拡張ディスプレイがあればそちらに開く（「ウィンドウ管理」の許可が必要）
       let features = 'popup=yes,width=1280,height=720';
       try {
-        if ('getScreenDetails' in window) {
+        if (!B.host && 'getScreenDetails' in window) {
           const sd = await window.getScreenDetails();
           const other = sd.screens.find((s) => s !== sd.currentScreen);
           if (other) {

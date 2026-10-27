@@ -947,7 +947,7 @@
   // ---------------- アプリとして使うとき（インストール版） ----------------
 
   // オフラインで起動できるよう、アプリのファイルを保存しておく（http(s) で開いたときだけ。file:// では使わない）
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  if (!B.host && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     navigator.serviceWorker.register('sw.js').catch((e) => console.warn('サービスワーカーを登録できませんでした', e));
   }
 
@@ -977,4 +977,12 @@
   history.onChange();
   onThemeChanged();
   offerRestore();
+
+  // デスクトップ版：起動時に渡されたファイルを受け取り、未保存かどうかを exe に伝える（閉じるときの確認用）
+  if (B.host) {
+    B.host.onOpen = (m) => files.openFile(B.host.toFile(m), null);
+    store.on((e) => { if (e.type === 'dirty') B.host.send('dirty', { value: store.dirty }); });
+    window.addEventListener('beforeunload', (e) => e.stopImmediatePropagation(), true); // 閉じる確認は exe が出す
+    B.host.send('ready');
+  }
 })(window.B);
