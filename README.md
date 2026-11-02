@@ -8,7 +8,7 @@
 
 **フォルダから使う：** 「板書を開く.cmd」をダブルクリックすると Edge のアプリモードで開く（ネット不要。ただしファイルの関連付けはない）。tools/launch-edge.ps1 がパスを file:// URL に変換して Edge に渡す（Edge の --app は日本語などを含む生のパスを受け付けないため）。
 
-**デスクトップ版（配布用）：** `node tools/build-desktop.js` で exe（WebView2、net48）をビルドし、インストーラー `dist/Bansho-Setup-<版>.exe` と受け取る方向けの手順書 PDF を作る（Inno Setup 6 が必要）。インストーラーは管理者権限なしでユーザーごとに入り、.board の関連付け・「送る」・スタートメニューを登録する。画面はブラウザー版と同じファイルを exe の隣の `app` フォルダに置いて表示し、保存・PDF・提示画面は exe が引き受ける（`js/host.js` ↔ `desktop/MainForm.cs`）。版は `desktop/Bansho.csproj` の `<Version>`。
+**デスクトップ版（配布用）：** `node tools/build-desktop.js` で exe（WebView2、net48）をビルドし、インストーラー `dist/Bansho-Setup-<版>.exe` と受け取る方向けの手順書 PDF を作る（Inno Setup 6 が必要）。インストーラーは管理者権限なしでユーザーごとに入り、.board の関連付け・「送る」・スタートメニューを登録する。画面はブラウザー版と同じファイルを exe の隣の `app` フォルダに置いて表示し、保存・PDF・提示画面は exe が引き受ける（`js/host.js` ↔ `desktop/MainForm.cs`）。版は `desktop/Bansho.csproj` の `<Version>`。メインウィンドウの大きさ・位置・最大化の状態は `%LOCALAPPDATA%\Bansho\window.txt` に記憶する。
 
 動作対象は Chromium 系（Edge / Chrome）。Firefox では上書き保存と提示画面の自動配置が使えない。
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,9 @@ namespace Bansho
         private string pendingFile;
         private bool dirty;
         private bool closeConfirmed;
+        private Rectangle? savedBounds;
+        private bool savedMaximized = true; // 記憶がなければ最大化で開く
+        private bool lastMaximized;
 
         public MainForm(string file)
         {
@@ -31,9 +35,12 @@ namespace Bansho
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             ClientSize = new Size(1400, 880);
             StartPosition = FormStartPosition.CenterScreen;
-            WindowState = FormWindowState.Maximized;
+            LoadWindowPlacement();
+            if (savedBounds != null) StartPosition = FormStartPosition.Manual;
+            WindowState = savedBounds == null && savedMaximized ? FormWindowState.Maximized : FormWindowState.Normal;
             Controls.Add(web);
-            Load += async (s, e) => await InitAsync();
+            Resize += (s, e) => { if (WindowState != FormWindowState.Minimized) lastMaximized = WindowState == FormWindowState.Maximized; };
+            Load += async (s, e) => { ApplyWindowPlacement(); await InitAsync(); };
             FormClosing += OnFormClosing;
         }
 
@@ -41,6 +48,56 @@ namespace Bansho
 
         // 自動テスト用：環境変数 BANSHO_AUTOSAVE_DIR があれば、保存のダイアログを出さずにそのフォルダへ保存する
         private static readonly string AutoSaveDir = Environment.GetEnvironmentVariable("BANSHO_AUTOSAVE_DIR");
+
+        // ---------------- ウィンドウの大きさ・位置の記憶 ----------------
+        // 「x y 幅 高さ 最大化(0/1)」の 1 行。自動テストのときは本来の設定に触れないよう、テスト用のフォルダに置く
+        private static string PlacementFile => Path.Combine(
+            AutoSaveDir ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bansho"), "window.txt");
+
+        private void LoadWindowPlacement()
+        {
+            try
+            {
+                var v = File.ReadAllText(PlacementFile).Trim().Split(' ').Select(t => int.Parse(t, CultureInfo.InvariantCulture)).ToArray();
+                if (v.Length != 5 || v[2] < MinimumWindow.Width || v[3] < MinimumWindow.Height) return;
+                savedBounds = new Rectangle(v[0], v[1], v[2], v[3]);
+                savedMaximized = v[4] != 0;
+            }
+            catch (Exception) { /* 記憶がない・壊れているときは既定の開き方にする */ }
+        }
+
+        private static readonly Size MinimumWindow = new Size(400, 300);
+
+        private void ApplyWindowPlacement()
+        {
+            if (savedBounds == null) return;
+            var r = savedBounds.Value;
+            // プロジェクターを外したあとなど、タイトルバーがどの画面にも出ない位置なら、主画面の中央に大きさだけ復元する
+            var titleBar = new Rectangle(r.X, r.Y, r.Width, 40);
+            if (!Screen.AllScreens.Any(s => { var i = Rectangle.Intersect(s.WorkingArea, titleBar); return i.Width >= 100 && i.Height >= 20; }))
+            {
+                var wa = Screen.PrimaryScreen.WorkingArea;
+                var w = Math.Min(r.Width, wa.Width);
+                var h = Math.Min(r.Height, wa.Height);
+                r = new Rectangle(wa.X + (wa.Width - w) / 2, wa.Y + (wa.Height - h) / 2, w, h);
+            }
+            // 拡大率の違う画面へ移ると Windows が大きさを変えることがあるので、移ったあとでもう一度合わせる
+            Bounds = r;
+            Bounds = r;
+            if (savedMaximized) WindowState = FormWindowState.Maximized;
+            lastMaximized = savedMaximized;
+        }
+
+        private void SaveWindowPlacement()
+        {
+            try
+            {
+                var r = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+                Directory.CreateDirectory(Path.GetDirectoryName(PlacementFile));
+                File.WriteAllText(PlacementFile, string.Join(" ", r.X, r.Y, r.Width, r.Height, lastMaximized ? 1 : 0));
+            }
+            catch (Exception) { /* 記憶できなくても閉じる動作は止めない */ }
+        }
 
         private async Task InitAsync()
         {
@@ -215,6 +272,7 @@ namespace Bansho
         {
             if (closeConfirmed || !dirty || AutoSaveDir != null)
             {
+                SaveWindowPlacement();
                 foreach (var p in presenters.ToArray()) p.Close();
                 return;
             }

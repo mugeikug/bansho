@@ -701,7 +701,18 @@
 
   // ---------------- 提示画面 ----------------
 
-  async function togglePresenter() {
+  // ボタン：開いていなければ開き、開いていれば閉じる
+  function togglePresenter() {
+    if (presenter.isOpen()) {
+      presenter.close();
+      updatePresentState();
+      return;
+    }
+    openPresenter();
+  }
+
+  // F5：授業中に誤って押しても投影が消えないよう、開くだけ（開いていれば提示画面を前面に出す）
+  async function openPresenter() {
     if (presenter.isOpen()) { presenter.win.focus(); return; }
     const ok = await presenter.open();
     if (!ok) {
@@ -724,6 +735,7 @@
     const open = presenter.isOpen();
     $('#btn-present').classList.toggle('on', open);
     $('#btn-present').textContent = open ? '提示中' : '提示画面';
+    $('#btn-present').title = open ? '提示画面を閉じる' : '提示画面を開く (F5)';
     $('#btn-pin').classList.toggle('on', !!presenter.pinnedId);
     $('#btn-black').classList.toggle('on', presenter.blank === 'black');
     $('#btn-white').classList.toggle('on', presenter.blank === 'white');
@@ -801,7 +813,7 @@
       else editor.setSelection([]);
       return;
     }
-    if (k === 'F5') { stop(); togglePresenter(); return; }
+    if (k === 'F5') { stop(); openPresenter(); return; }
     if (k === 'F1') { stop(); showHelp(); return; }
     if (inText) return; // 文字入力中は1文字のショートカットを無効にする
 
