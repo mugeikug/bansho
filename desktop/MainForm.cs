@@ -252,7 +252,7 @@ namespace Bansho
             var deferral = e.GetDeferral();
             try
             {
-                var f = new PresenterForm(Icon);
+                var f = new PresenterForm(this);
                 presenters.Add(f);
                 f.FormClosed += (s, a) => presenters.Remove(f);
                 f.Show();

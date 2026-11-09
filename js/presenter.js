@@ -71,6 +71,43 @@
       this.win = null;
     }
 
+    closeAndNotify() {
+      this.close();
+      this.changed();
+    }
+
+    menuOpen(w) { return w.document.getElementById('menu').style.display === 'block'; }
+    hideMenu(w) { w.document.getElementById('menu').style.display = 'none'; }
+
+    // 右クリックのメニュー（全画面表示の切り替え・閉じる）と、動かしたときだけ見えるマウスポインター
+    setupControls(w) {
+      const d = w.document;
+      const menu = d.getElementById('menu');
+      const full = d.getElementById('m-full');
+      d.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        full.textContent = d.fullscreenElement ? '全画面表示を終了（Esc）' : '全画面表示';
+        menu.style.display = 'block';
+        const x = Math.min(e.clientX, w.innerWidth - menu.offsetWidth - 4);
+        const y = Math.min(e.clientY, w.innerHeight - menu.offsetHeight - 4);
+        menu.style.left = Math.max(0, x) + 'px';
+        menu.style.top = Math.max(0, y) + 'px';
+      });
+      d.addEventListener('mousedown', (e) => { if (e.button === 0 && !menu.contains(e.target)) this.hideMenu(w); });
+      full.addEventListener('click', () => {
+        this.hideMenu(w);
+        if (d.fullscreenElement) d.exitFullscreen().catch(() => {});
+        else d.documentElement.requestFullscreen().catch(() => {});
+      });
+      d.getElementById('m-close').addEventListener('click', () => this.closeAndNotify());
+      let timer = 0;
+      d.addEventListener('mousemove', () => {
+        d.body.classList.remove('idle');
+        w.clearTimeout(timer);
+        timer = w.setTimeout(() => { if (!this.menuOpen(w)) d.body.classList.add('idle'); }, 2000);
+      });
+    }
+
     build(w) {
       const cssUrl = new URL('css/page.css', location.href).href;
       const d = w.document;
@@ -78,15 +115,21 @@
       d.write(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>提示画面 - デジタル板書</title>
 <link rel="stylesheet" href="${cssUrl}">
 <style>
-html,body{margin:0;height:100%;background:#000;overflow:hidden;cursor:none;user-select:none}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;user-select:none}
+body.idle{cursor:none}
 #stage{position:fixed;inset:0;overflow:hidden}
 #hint{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;
  font:16px "Yu Gothic UI","Segoe UI",sans-serif;padding:10px 18px;border-radius:8px;transition:opacity .6s;pointer-events:none}
 #hint.hide{opacity:0}
 #blank{position:fixed;inset:0;display:none;z-index:5}
-</style></head><body><div id="stage"></div>
+#menu{position:fixed;display:none;z-index:10;min-width:200px;padding:4px 0;background:#fff;color:#222;border-radius:8px;
+ box-shadow:0 4px 16px rgba(0,0,0,.4);font:16px "Yu Gothic UI","Segoe UI",sans-serif;cursor:default}
+#menu button{display:block;width:100%;border:0;background:none;padding:9px 20px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+#menu button:hover{background:#e8eef8}
+</style></head><body class="idle"><div id="stage"></div>
 <div id="blank"></div>
-<div id="hint">ダブルクリック（または F11）で全画面表示</div>
+<div id="menu"><button id="m-full"></button><button id="m-close">提示画面を閉じる（Esc）</button></div>
+<div id="hint">ダブルクリック（または F11）で全画面表示　右クリック・Esc で閉じる</div>
 <script>
 document.addEventListener('dblclick', function () {
   if (document.fullscreenElement) document.exitFullscreen();
@@ -107,7 +150,18 @@ setTimeout(function () { document.getElementById('hint').classList.add('hide'); 
       };
       fit();
       w.addEventListener('resize', fit);
-      w.addEventListener('keydown', (e) => { if (this.onKey) this.onKey(e); });
+      this.setupControls(w);
+      w.addEventListener('keydown', (e) => {
+        // Esc：メニューを閉じる → 全画面表示を終える → 提示画面を閉じる
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          if (this.menuOpen(w)) this.hideMenu(w);
+          else if (w.document.fullscreenElement) w.document.exitFullscreen().catch(() => {});
+          else this.closeAndNotify();
+          return;
+        }
+        if (this.onKey) this.onKey(e);
+      });
       w.addEventListener('pagehide', () => {
         if (this.win !== w) return;
         if (this.view) { this.view.destroy(); this.view = null; }
