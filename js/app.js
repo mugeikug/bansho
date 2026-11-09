@@ -364,8 +364,8 @@
       const v = Number(pick.dataset.space);
       editor.setLineAttrs({ mt: v || null });
     } else if (pick.dataset.olstart) {
-      const ls = editor.lineState();
-      if (!ls || !ls.ol) { toast('番号付きリストの行で選んでください'); return; }
+      const ls = editor.olLineState();
+      if (!ls) { toast(editor.ts ? '番号付きリストの行で選んでください' : '選んだボックスに番号付きリストがありません'); return; }
       if (editor.ts) editor.rememberRange();
       const v = prompt('この行から始める番号（1 以上）', String(ls.os || 1));
       if (editor.ts) editor.restoreRange();

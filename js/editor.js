@@ -974,19 +974,42 @@
       return this.formatSelectedLines(() => attrs);
     }
 
-    // 番号付きリストの開始番号：選んだ範囲の最初の番号付きの行に設定する
+    // 番号付きリストの開始番号：文字入力中は選んだ範囲の、選択ツールではボックス（表はセル）ごとの、最初の番号付きの行に設定する
     setOlStart(n) {
       let done = false;
-      return this.changeLines((a) => {
+      const fn = (a) => {
         if (done || !a.ol) return null;
         done = true;
         return { os: n === 1 ? null : n };
-      });
+      };
+      if (this.ts) return this.changeLines(fn);
+      return this.formatSelectedLines(fn, () => { done = false; });
+    }
+
+    // 開始番号のメニュー用：対象になる番号付きの行の書式（なければ null）
+    olLineState() {
+      if (this.ts) {
+        const ls = this.lineState();
+        return ls && ls.ol ? ls : null;
+      }
+      for (const t of this.selectedTexts()) {
+        const htmls = t.type === 'table' ? t.cells.flat().map((c) => c.html) : [t.html];
+        for (const h of htmls) {
+          const flat = B.rich.parseHtml(h);
+          for (const ln of B.rich.lineList(flat)) {
+            const a = B.rich.lineAttrsOf(flat, ln);
+            if (a.ol) return a;
+          }
+        }
+      }
+      return null;
     }
 
     // 選択中のテキストボックス・表のすべての行に行の書式を適用する
-    formatSelectedLines(fn) {
+    // begin：ボックス・セルごとに、行を見始める前に呼ぶ
+    formatSelectedLines(fn, begin) {
       const conv = (html) => {
+        if (begin) begin();
         const flat = B.rich.parseHtml(html);
         for (const ln of B.rich.lineList(flat)) {
           const next = fn(B.rich.lineAttrsOf(flat, ln));
